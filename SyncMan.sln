@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35017.193
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncMan", "SyncMan.csproj", "{73685A05-002F-4A9D-8BBB-58BEFE5004BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{73685A05-002F-4A9D-8BBB-58BEFE5004BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73685A05-002F-4A9D-8BBB-58BEFE5004BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73685A05-002F-4A9D-8BBB-58BEFE5004BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73685A05-002F-4A9D-8BBB-58BEFE5004BC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B316E217-6725-4AFD-8F80-147AAC88154B}
+	EndGlobalSection
+EndGlobal
