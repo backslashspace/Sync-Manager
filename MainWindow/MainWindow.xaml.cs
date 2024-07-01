@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Windows;
+﻿using System.Windows;
 
 namespace SyncMan
 {
@@ -11,7 +8,7 @@ namespace SyncMan
         {
             InitializeComponent();
             DWMAPI.Initialize();
-
+            
             UI.MainWindow = this;
             UI.Dispatcher = Dispatcher;
 
@@ -20,8 +17,12 @@ namespace SyncMan
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            ButtonAnimator.Initialize();
+
             UI.MainWindowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
             DWMAPI.SetTheme(UI.MainWindowHandle, true);
+
+            ButtonAnimator.SecondaryButton.Hook(ref UploadButton);
         }
 
         private void Upload(object sender, RoutedEventArgs e)

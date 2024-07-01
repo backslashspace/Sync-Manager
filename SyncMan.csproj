@@ -98,6 +98,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="UI\Animators\Buttons.cs" />
     <Compile Include="Types\stackGuid.cs" />
     <Compile Include="state.cs" />
     <Compile Include="temp.cs" />
@@ -116,6 +117,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="UI\Buttons.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -141,6 +146,13 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Resource Include="resources\Fonts\Cascadia Mono.ttf" />
+    <Resource Include="resources\Fonts\Inter Display Medium.ttf" />
+    <Resource Include="resources\Fonts\Inter Display SemiBold.ttf" />
+    <Resource Include="resources\Fonts\Inter Display.ttf" />
+    <Resource Include="resources\Fonts\Inter Medium.ttf" />
+    <Resource Include="resources\Fonts\Inter SemiBold.ttf" />
+    <Resource Include="resources\Fonts\Inter.ttf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App\App.config" />
@@ -151,6 +163,7 @@
   <ItemGroup>
     <Resource Include="notes.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call ..\..\Build-Incrementor.exe ..\..\Properties\AssemblyInfo.cs</PostBuildEvent>

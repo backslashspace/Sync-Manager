@@ -9,16 +9,29 @@
         
         ResizeMode="CanMinimize"
         Title="Sync Manager"
-        Height="412" Width="385"
+        Height="412" Width="400"
         Background="#202020">
     
     <Grid>
 
-        <Button x:Name="UploadButton"  Click="Upload" Content="Upload" Margin="12,17,0,0" FontSize="25" FontWeight="DemiBold" Foreground="#ffffff" Height="70" VerticalAlignment="Top" HorizontalAlignment="Left" Width="172"/>
+        <Button x:Name="UploadButton" Style="{DynamicResource Button_Secondary}"
+                Click="Upload"
+                Content="Upload"
+                Margin="16,20,0,0"
+                FontSize="25"
+                Height="62" Width="164"
+                VerticalAlignment="Top" HorizontalAlignment="Left"/>
 
-        <Button Click="Download" x:Name="DownloadButton" Content="Download" Margin="0,17,12,0" FontSize="25" FontWeight="DemiBold" Foreground="#ffffff" HorizontalAlignment="Right" Width="172" Height="70" VerticalAlignment="Top"/>
+        <Button x:Name="DownloadButton" Style="{DynamicResource Button_Secondary}"
+            Click="Download"
+                Content="Download"
+                Margin="0,20,16,0"
+                FontSize="25"
+                Foreground="#ffffff"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Width="164" Height="62"/>
 
-        <Button Click="SetLocalAlias" x:Name="AliasButton"  Content="Set Alias" Margin="0,98,12,0" FontSize="12" FontWeight="DemiBold" Foreground="#ffffff" Height="34" VerticalAlignment="Top" HorizontalAlignment="Right" Width="76"/>
+        <Button Click="SetLocalAlias" Style="{DynamicResource Button_Secondary}"  x:Name="AliasButton"  Content="Set Alias" Margin="0,98,12,0" FontSize="12" FontWeight="DemiBold" Foreground="#ffffff" Height="34" VerticalAlignment="Top" HorizontalAlignment="Right" Width="76"/>
 
         <Button Visibility="Hidden" Foreground="#ffffff" Margin="0,82,12,0" FontSize="12" FontWeight="DemiBold" Height="22" VerticalAlignment="Top" HorizontalAlignment="Right" Width="29"/>
 
@@ -43,7 +56,6 @@
 
         <Rectangle Margin="0,147,0,0" Fill="#aaaaaa" Height="2" VerticalAlignment="Top"/>
 
-        <Rectangle Margin="0,0,0,0" Fill="#333333" Height="8" VerticalAlignment="Bottom"/>
         
     </Grid>
 </Window>
