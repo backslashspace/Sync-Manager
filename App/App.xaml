@@ -9,7 +9,12 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
 
+                <ResourceDictionary Source="\UI\Default.xaml"/>
+                <ResourceDictionary Source="\UI\Fonts.xaml"/>
                 <ResourceDictionary Source="\UI\Buttons.xaml"/>
+                <ResourceDictionary Source="\UI\ScrollBar.xaml"/>
+                <ResourceDictionary Source="\UI\ScrollViewer.xaml"/>
+                <ResourceDictionary Source="\UI\RichTextBox.xaml"/>
 
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

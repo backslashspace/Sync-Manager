@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.Reflection;
+using System.Windows;
 
 namespace SyncMan
 {
@@ -7,39 +9,58 @@ namespace SyncMan
         public MainWindow()
         {
             InitializeComponent();
-            DWMAPI.Initialize();
             
             UI.MainWindow = this;
             UI.Dispatcher = Dispatcher;
 
-            Loaded += OnLoaded;
+            State.FileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+            Title += $"v{State.FileVersionInfo.FileVersion}";
+
+            DWMAPI.Initialize();
+            Loaded += Initialize;
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        private async void Initialize(object sender, RoutedEventArgs e)
         {
-            ButtonAnimator.Initialize();
-
             UI.MainWindowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
             DWMAPI.SetTheme(UI.MainWindowHandle, true);
+            DWMAPI.SetCaptionColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(0x20u, 0x20u, 0x20u));
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(127, 127, 127));
 
-            ButtonAnimator.SecondaryButton.Hook(ref UploadButton);
+            ButtonAnimator.Initialize();
+            ButtonAnimator.SecondaryButton.Hook(UploadButton);
+            ButtonAnimator.SecondaryButton.Hook(DownloadButton);
+            ButtonAnimator.SecondaryButton.Hook(AliasButton);
+
+            LogTextBox.Document = new();
+            UI.MainWindow.LogTextBox.Document.Blocks.Add(paragraph);
+
+            await ObtainConfiguration().ConfigureAwait(true);
         }
+
+        // ###############################################################
+
+
+
+
+
+
+
+
 
         private void Upload(object sender, RoutedEventArgs e)
         {
-
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(96, 125, 146));
         }
 
         private void Download(object sender, RoutedEventArgs e)
         {
-            xGuid guid = xGuid.CreateGuid();
-       
-
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(110, 134, 104));
         }
 
         private void SetLocalAlias(object sender, RoutedEventArgs e)
         {
-
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(127, 127, 127));
         }
     }
 }

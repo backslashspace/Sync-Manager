@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows.Threading;
 
 namespace SyncMan
@@ -9,5 +10,12 @@ namespace SyncMan
 
         internal static MainWindow MainWindow;
         internal static Dispatcher Dispatcher;
+    }
+
+    internal static class State
+    {
+        internal static Guid MachineGuid;
+
+        internal static FileVersionInfo FileVersionInfo;
     }
 }

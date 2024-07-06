@@ -115,7 +115,7 @@ namespace SyncMan
 
             //
 
-            internal static void Hook(ref readonly Button button)
+            internal static void Hook(Button button)
             {
                 if (!Initialized) throw new InvalidOperationException("CheckBoxAnimator was not initialized");
 
@@ -133,7 +133,7 @@ namespace SyncMan
                 if (sender == null) return;
                 Button checkBox = sender as Button;
 
-                MouseEnter_Begin(ref checkBox);
+                MouseEnter_Begin(checkBox);
             }
 
             private static void Button_MouseLeave(object sender, MouseEventArgs e)
@@ -141,7 +141,7 @@ namespace SyncMan
                 if (sender == null) { return; }
                 Button checkBox = sender as Button;
 
-                MouseLeave_Begin(ref checkBox);
+                MouseLeave_Begin(checkBox);
             }
 
             private static void Button_MouseDown(object sender, MouseButtonEventArgs e)
@@ -149,7 +149,7 @@ namespace SyncMan
                 if (sender == null) return;
                 Button checkBox = sender as Button;
 
-                MouseDown_Begin(ref checkBox);
+                MouseDown_Begin(checkBox);
             }
 
             private static void Button_Up(object sender, RoutedEventArgs e)
@@ -157,7 +157,7 @@ namespace SyncMan
                 if (sender == null) { return; }
                 Button checkBox = sender as Button;
 
-                MouseUp_Begin(ref checkBox);
+                MouseUp_Begin(checkBox);
             }
             #endregion
 
@@ -167,7 +167,7 @@ namespace SyncMan
             private static readonly ColorAnimation MouseEnter_BackgroundColorAnimation = new();
             private static readonly Storyboard MouseEnter_Storyboard = new();
 
-            private static void MouseEnter_Begin(ref readonly Button button)
+            private static void MouseEnter_Begin(Button button)
             {
                 Storyboard.SetTarget(MouseEnter_BackgroundColorAnimation, button);
                 Storyboard.SetTargetProperty(MouseEnter_BackgroundColorAnimation, BackgroundPropertyPath);
@@ -180,7 +180,7 @@ namespace SyncMan
             private static readonly ColorAnimation MouseLeave_BackgroundColorAnimation = new();
             private static readonly Storyboard MouseLeave_Storyboard = new();
 
-            private static void MouseLeave_Begin(ref readonly Button button)
+            private static void MouseLeave_Begin(Button button)
             {
                 Storyboard.SetTarget(MouseLeave_BackgroundColorAnimation, button);
                 Storyboard.SetTargetProperty(MouseLeave_BackgroundColorAnimation, BackgroundPropertyPath);
@@ -195,7 +195,7 @@ namespace SyncMan
             private static readonly ColorAnimation MouseDown_FontColorAnimation = new();
             private static readonly Storyboard MouseDown_Storyboard = new();
 
-            private static void MouseDown_Begin(ref readonly Button button)
+            private static void MouseDown_Begin(Button button)
             {
                 Storyboard.SetTarget(MouseDown_BackgroundColorAnimation, button);
                 Storyboard.SetTargetProperty(MouseDown_BackgroundColorAnimation, BackgroundPropertyPath);
@@ -216,7 +216,7 @@ namespace SyncMan
             private static readonly ColorAnimation MouseUp_FontColorAnimation = new();
             private static readonly Storyboard MouseUp_Storyboard = new();
 
-            private static void MouseUp_Begin(ref readonly Button button)
+            private static void MouseUp_Begin(Button button)
             {
                 Storyboard.SetTarget(MouseUp_BackgroundColorAnimation, button);
                 Storyboard.SetTargetProperty(MouseUp_BackgroundColorAnimation, BackgroundPropertyPath);

@@ -1,0 +1,17 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <FontFamily x:Key="Inter">pack://application:,,,/resources/Fonts/#Inter</FontFamily>
+    <FontFamily x:Key="Inter Medium">pack://application:,,,/resources/Fonts/#Inter Medium</FontFamily>
+    <FontFamily x:Key="Inter SemiBold">pack://application:,,,/resources/Fonts/#Inter SemiBold</FontFamily>
+
+    <FontFamily x:Key="Inter Display">pack://application:,,,/resources/Fonts/#Inter Display</FontFamily>
+    <FontFamily x:Key="Inter Display Medium">pack://application:,,,/resources/Fonts/#Inter Display Medium</FontFamily>
+    <FontFamily x:Key="Inter Display SemiBold">pack://application:,,,/resources/Fonts/#Inter Display SemiBold</FontFamily>
+
+    <FontFamily x:Key="Cascadia Mono">pack://application:,,,/resources/Fonts/#Cascadia Mono</FontFamily>
+
+    <SolidColorBrush x:Key="FontColor" Color="#e6e6e6"/>
+    <SolidColorBrush x:Key="FontColor_Inverted" Color="#161616"/>
+
+</ResourceDictionary>

@@ -8,54 +8,119 @@
         mc:Ignorable="d"
         
         ResizeMode="CanMinimize"
-        Title="Sync Manager"
-        Height="412" Width="400"
+        Title="Sync Manager "
+        Height="424" Width="412"
         Background="#202020">
-    
+
     <Grid>
 
         <Button x:Name="UploadButton" Style="{DynamicResource Button_Secondary}"
-                Click="Upload"
-                Content="Upload"
-                Margin="16,20,0,0"
-                FontSize="25"
-                Height="62" Width="164"
-                VerticalAlignment="Top" HorizontalAlignment="Left"/>
+            Click="Upload"
+            Margin="0,20,16,0"
+            FontSize="25"
+            Height="62" Width="174"
+            FontFamily="{StaticResource Inter Medium}"
+            VerticalAlignment="Top" HorizontalAlignment="Right">
+            <Button.Content>
+                <Grid>
+                    <TextBlock Text="Upload"
+                        VerticalAlignment="Center"
+                               Margin="28,0,0,0"/>
+                    <Image
+                        Source="\resources\up.png"
+                        RenderOptions.BitmapScalingMode="HighQuality"
+                        VerticalAlignment="Center"
+                        Height="46"
+                        Margin="-122,0,0,0"/>
+                </Grid>
+            </Button.Content>
+        </Button>
 
         <Button x:Name="DownloadButton" Style="{DynamicResource Button_Secondary}"
             Click="Download"
-                Content="Download"
-                Margin="0,20,16,0"
-                FontSize="25"
-                Foreground="#ffffff"
-                HorizontalAlignment="Right" VerticalAlignment="Top"
-                Width="164" Height="62"/>
+            Margin="16,20,0,0"
+            FontSize="25"
+            FontFamily="{StaticResource Inter Medium}"
+            HorizontalAlignment="Left" VerticalAlignment="Top"
+            Width="174" Height="62">
+            <Button.Content>
+                <Grid>
+                    <TextBlock Text="Download"
+                        FontSize="24"
+                        VerticalAlignment="Center"
+                        Margin="-1,0,0,0"/>
+                    <Image
+                        Source="\resources\down.png"
+                        RenderOptions.BitmapScalingMode="HighQuality"
+                        VerticalAlignment="Center"
+                        Height="46"
+                        Margin="122,0,0,0"/>
+                </Grid>
+            </Button.Content>
+        </Button>
 
-        <Button Click="SetLocalAlias" Style="{DynamicResource Button_Secondary}"  x:Name="AliasButton"  Content="Set Alias" Margin="0,98,12,0" FontSize="12" FontWeight="DemiBold" Foreground="#ffffff" Height="34" VerticalAlignment="Top" HorizontalAlignment="Right" Width="76"/>
+        <TextBox x:Name="MachineName"
+            Text="Alias: "
+            Focusable="False"
+            Foreground="{StaticResource FontColor}"
+            BorderBrush="#0000"
+            BorderThickness="0"
+            Background="#0000"
+            FontFamily="{StaticResource Inter Medium}"
+            TextAlignment="Left"
+            VerticalContentAlignment="Center"
+            Margin="16,101,0,0"
+            HorizontalAlignment="Left" VerticalAlignment="Top" 
+            Width="256" Height="24"/>
 
-        <Button Visibility="Hidden" Foreground="#ffffff" Margin="0,82,12,0" FontSize="12" FontWeight="DemiBold" Height="22" VerticalAlignment="Top" HorizontalAlignment="Right" Width="29"/>
+        <Button x:Name="AliasButton" Style="{DynamicResource Button_Secondary}"
+            Click="SetLocalAlias"
+            Content="Set Alias"
+            Margin="0,100,16,0"
+            FontSize="12"
+            FontFamily="{StaticResource Inter Medium}"
+            Height="26" Width="68"
+            VerticalAlignment="Top" HorizontalAlignment="Right"/>
 
-        <Label 
-            Margin="12,100,0,0" 
-            Content=""
-            Foreground="#ffffff"
-            FontWeight="DemiBold"
-            x:Name="GLabel" 
-            HorizontalAlignment="Left" 
-            Width="267" Height="30" 
-            VerticalAlignment="Top"
-            />
+        <Grid Margin="{Binding Margin, ElementName=Liness, Mode=OneTime}" Background="#333333">
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" x:Name="LogBox" Margin="0,149,0,8" IsEnabled="True">
-            <RichTextBox
-                
-                x:Name="LogTextBox"
-                IsReadOnly="True" RenderTransformOrigin="0,.05" Width="385"
-                />
-        </ScrollViewer>
+            <ScrollViewer x:Name="LogScrollViewer" Style="{StaticResource ScrollViewer}"
+                Margin="0,10,0,8"
+                VerticalScrollBarVisibility="Auto"
+                IsEnabled="True">
+                <!--#region scrollbar offset because of border -->
+                <ScrollViewer.Template>
+                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                        <Grid x:Name="Grid" Background="{TemplateBinding Background}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Rectangle x:Name="Corner" Grid.Column="1" Fill="Transparent" Grid.Row="1"/>
+                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter" CanHorizontallyScroll="False" ContentTemplate="{TemplateBinding ContentTemplate}" CanVerticallyScroll="False" Grid.Column="0" Content="{TemplateBinding Content}" CanContentScroll="{TemplateBinding CanContentScroll}" Margin="{TemplateBinding Padding}" Grid.Row="0"/>
+                            <ScrollBar Margin="0,-8,0,-8" Style="{DynamicResource ScrollBarStyle}" x:Name="PART_VerticalScrollBar" AutomationProperties.AutomationId="VerticalScrollBar" Cursor="Arrow" Grid.Column="2" Maximum="{TemplateBinding ScrollableHeight}" Minimum="0" Grid.Row="0" Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource Mode=TemplatedParent}}" ViewportSize="{TemplateBinding ViewportHeight}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                            <ScrollBar Style="{DynamicResource ScrollBarStyle}" x:Name="PART_HorizontalScrollBar" AutomationProperties.AutomationId="HorizontalScrollBar" Cursor="Arrow" Grid.Column="0" Maximum="{TemplateBinding ScrollableWidth}" Minimum="0" Orientation="Horizontal" Grid.Row="1" Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource Mode=TemplatedParent}}" ViewportSize="{TemplateBinding ViewportWidth}" Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </ScrollViewer.Template>
+                <!--#endregion-->
 
-        <Rectangle Margin="0,147,0,0" Fill="#aaaaaa" Height="2" VerticalAlignment="Top"/>
+                <RichTextBox x:Name="LogTextBox" Style="{DynamicResource RichTextBox}"
+                    IsReadOnly="True"
+                    Margin="3,0,0,0"/>
 
-        
+            </ScrollViewer>
+        </Grid>
+
+        <Rectangle x:Name="Liness"
+            Margin="0,144,0,0"
+            Fill="#eeeeee"
+            Height="2"
+            VerticalAlignment="Top"/>
+
     </Grid>
 </Window>

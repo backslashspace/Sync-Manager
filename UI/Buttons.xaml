@@ -1,28 +1,9 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--#region Fonts -->
-    <FontFamily x:Key="Inter">pack://application:,,,/resources/Fonts/#Inter</FontFamily>
-    <FontFamily x:Key="Inter Medium">pack://application:,,,/resources/Fonts/#Inter Medium</FontFamily>
-    <FontFamily x:Key="Inter SemiBold">pack://application:,,,/resources/Fonts/#Inter SemiBold</FontFamily>
-
-    <FontFamily x:Key="Inter Display">pack://application:,,,/resources/Fonts/#Inter Display</FontFamily>
-    <FontFamily x:Key="Inter Display Medium">pack://application:,,,/resources/Fonts/#Inter Display Medium</FontFamily>
-    <FontFamily x:Key="Inter Display SemiBold">pack://application:,,,/resources/Fonts/#Inter Display SemiBold</FontFamily>
-
-    <FontFamily x:Key="Cascadia Mono">pack://application:,,,/resources/Fonts/#Cascadia Mono</FontFamily>
-    <!--#endregion-->
-
-    <SolidColorBrush x:Key="AccentColor" Color="#4cc2ff"/>
-    <SolidColorBrush x:Key="AccentColorBorder" Color="#5ac7ff"/>
-
-    <SolidColorBrush x:Key="FontColor" Color="#e6e6e6"/>
-    <SolidColorBrush x:Key="FontColor_Inverted" Color="#161616"/>
-
     <SolidColorBrush x:Key="Button_Secondary_Background" Color="#2d2d2d"/>
     <SolidColorBrush x:Key="Button_Secondary_BorderBrush" Color="#353535"/>
 
-    <!--#region Buttons -->
     <Style x:Key="Button_FocusVisual">
         <Setter Property="Control.Template">
             <Setter.Value>
@@ -32,38 +13,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!--#region PrimaryButton -->
-    <Style x:Key="Button_Primary" TargetType="{x:Type Button}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource Button_FocusVisual}"/>
-        <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentColorBorder}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="FontFamily" Value="{StaticResource Inter Medium}"/>
-        <Setter Property="Foreground" Value="{DynamicResource FontColor_Inverted}"/>
-        <Setter Property="FontSize" Value="14"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type Button}">
-                    <Border Background="{TemplateBinding BorderBrush}" CornerRadius="5" SnapsToDevicePixels="True">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4.15" Margin="1">
-                            <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsEnabled" Value="false">
-                            <Setter Property="Background" Value="#303030"/>
-                            <Setter Property="BorderBrush" Value="#303030"/>
-                            <Setter Property="Foreground" Value="#727272"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-    <!--#endregion-->
 
     <!--#region SecondaryButton -->
     <Style x:Key="Button_Secondary" TargetType="{x:Type Button}">
@@ -96,15 +45,5 @@
         </Setter>
     </Style>
     <!--#endregion-->
-    <!--#endregion-->
-
-
-
-
-
-
-
-
-
 
 </ResourceDictionary>
