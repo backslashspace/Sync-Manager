@@ -9,7 +9,7 @@ namespace SyncMan
     {
         private static async Task ObtainConfiguration()
         {
-            State.MachineGuid = await ObtainXGuid();
+            State.MachineGuid = await ObtainGuid();
 
             String alias = ObtainAlias();
             alias ??= "<not set>";
@@ -31,7 +31,7 @@ namespace SyncMan
             return alias;
         }
 
-        private static async Task<Guid> ObtainXGuid()
+        private static async Task<Guid> ObtainGuid()
         {
             Guid guid;
 

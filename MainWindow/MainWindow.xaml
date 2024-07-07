@@ -16,6 +16,7 @@
 
         <Button x:Name="UploadButton" Style="{DynamicResource Button_Secondary}"
             Click="Upload"
+            IsEnabled="False"
             Margin="0,20,16,0"
             FontSize="25"
             Height="62" Width="174"
@@ -37,6 +38,7 @@
         </Button>
 
         <Button x:Name="DownloadButton" Style="{DynamicResource Button_Secondary}"
+            IsEnabled="False"
             Click="Download"
             Margin="16,20,0,0"
             FontSize="25"
@@ -74,6 +76,7 @@
             Width="256" Height="24"/>
 
         <Button x:Name="AliasButton" Style="{DynamicResource Button_Secondary}"
+            IsEnabled="False"
             Click="SetLocalAlias"
             Content="Set Alias"
             Margin="0,100,16,0"

@@ -45,9 +45,9 @@ namespace SyncMan
 
         internal static void LogBoxRemoveLine(UInt32 amount = 1)
         {
-            for (UInt32 I = 0; I < amount; I++)
+            for (UInt32 i = 0; i < amount; i++)
             {
-                UI.MainWindow.LogTextBox.Document.Blocks.Remove(UI.MainWindow.LogTextBox.Document.Blocks.LastBlock);
+                paragraph.Inlines.Remove(paragraph.Inlines.LastInline);
             }
         }
     }

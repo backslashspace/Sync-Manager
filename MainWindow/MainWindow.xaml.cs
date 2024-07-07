@@ -36,6 +36,10 @@ namespace SyncMan
             UI.MainWindow.LogTextBox.Document.Blocks.Add(paragraph);
 
             await ObtainConfiguration().ConfigureAwait(true);
+
+            UploadButton.IsEnabled = true;
+            DownloadButton.IsEnabled = true;
+            AliasButton.IsEnabled = true;
         }
 
         // ###############################################################
