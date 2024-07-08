@@ -63,6 +63,7 @@ namespace SyncMan
 
             internal static void SetLightMode()
             {
+
                 UI.MainWindow.Resources["Button_Secondary_Background"] = new SolidColorBrush(Color.FromRgb(251, 251, 251));
                 UI.MainWindow.Resources["Button_Secondary_BorderBrush"] = new SolidColorBrush(Color.FromRgb(215, 215, 215));
 

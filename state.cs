@@ -15,7 +15,10 @@ namespace SyncMan
     internal static class State
     {
         internal static Guid MachineGuid;
+        internal static String Alias;
 
         internal static FileVersionInfo FileVersionInfo;
+
+        internal static readonly Byte[] AccentColor = new Byte[3];
     }
 }

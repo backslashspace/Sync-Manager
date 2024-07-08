@@ -104,15 +104,28 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="MainWindow\Init_ObtainConfiguration.cs" />
-    <Compile Include="MainWindow\Log.cs" />
+    <Compile Include="Program\InputBox\InputBox.xaml.cs">
+      <DependentUpon>InputBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Program\MessageBox\AddButton.cs" />
+    <Compile Include="Program\MessageBox\BuildWindow.cs" />
+    <Compile Include="Program\MessageBox\MessageBox.xaml.cs">
+      <DependentUpon>MessageBox.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Program\MessageBox\Icons\IconEnum.cs" />
+    <Compile Include="Program\ObtainConfiguration.cs" />
+    <Compile Include="Program\LogBox.cs" />
     <Compile Include="UI\Animators\Buttons.cs" />
     <Compile Include="state.cs" />
     <Compile Include="temp.cs" />
     <Compile Include="Util\Util.cs" />
     <Compile Include="WinAPI\DWM-API.cs" />
     <Compile Include="WinAPI\Win10Helper.cs" />
-    <Page Include="MainWindow\MainWindow.xaml">
+    <Page Include="Program\InputBox\InputBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Program\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -120,10 +133,14 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="MainWindow\MainWindow.xaml.cs">
+    <Compile Include="Program\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Program\MessageBox\MessageBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UI\Buttons.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -145,6 +162,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="UI\ScrollViewer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UI\TextBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -194,6 +215,22 @@
   <ItemGroup>
     <Resource Include="resources\down.png" />
     <Resource Include="resources\up.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Program\MessageBox\Icons\imageres_104.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_105.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_106.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_107.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_114.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_150.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_78.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_84.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_98.ico" />
+    <Resource Include="Program\MessageBox\Icons\imageres_99.ico" />
+    <Resource Include="Program\MessageBox\Icons\shell32_14.ico" />
+    <Resource Include="Program\MessageBox\Icons\shell32_16826.ico" />
+    <Resource Include="Program\MessageBox\Icons\shell32_1_16802.ico" />
+    <Resource Include="Program\MessageBox\Icons\shell32_48.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
