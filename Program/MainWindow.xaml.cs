@@ -1,7 +1,9 @@
 ﻿using Microsoft.Win32;
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace SyncMan
@@ -37,6 +39,8 @@ namespace SyncMan
             LogTextBox.Document = new();
             UI.MainWindow.LogTextBox.Document.Blocks.Add(paragraph);
 
+            
+
             await ObtainConfiguration().ConfigureAwait(true);
 
             Util.GetAccentColors();
@@ -65,6 +69,15 @@ namespace SyncMan
         private void Download(object sender, RoutedEventArgs e)
         {
             DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(110, 134, 104));
+
+            Style textBoxStyle = Application.Current.Resources["TextBox"] as Style;
+
+            textBoxStyle.Setters.Remove(new Setter(TextBox.ContextMenuProperty, null));
+            textBoxStyle.Setters.Add(new Setter(TextBox.ContextMenuProperty, new ContextMenu()));
+
+            Application.Current.Resources["TextBox"] = textBoxStyle;
+
+
         }
 
         private void SetLocalAlias(object sender, RoutedEventArgs e)

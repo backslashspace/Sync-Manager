@@ -61,19 +61,14 @@
             </Button.Content>
         </Button>
 
-        <TextBox x:Name="MachineName"
+        <TextBlock x:Name="MachineName"
             Text="Alias: "
-            Focusable="False"
             Foreground="{StaticResource FontColor}"
-            BorderBrush="#0000"
-            BorderThickness="0"
-            Background="#0000"
             FontFamily="{StaticResource Inter Medium}"
             TextAlignment="Left"
-            VerticalContentAlignment="Center"
-            Margin="16,101,0,0"
+            Margin="16,105,0,0"
             HorizontalAlignment="Left" VerticalAlignment="Top" 
-            Width="256" Height="24"/>
+            Width="256" Height="15"/>
 
         <Button x:Name="AliasButton" Style="{DynamicResource Button_Secondary}"
             IsEnabled="False"
