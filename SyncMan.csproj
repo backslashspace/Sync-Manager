@@ -53,6 +53,9 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite">
+      <HintPath>resources\libs\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\7. Nuget Packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
       <Private>True</Private>
@@ -88,6 +91,11 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Text.RegularExpressions, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\7. Nuget Packages\System.Text.RegularExpressions.4.3.1\lib\net463\System.Text.RegularExpressions.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
@@ -101,15 +109,24 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Program\InputBox\InputBox.xaml.cs">
+    <Compile Include="Program\BackEnd\1. ReadConfig.cs" />
+    <Compile Include="Program\BackEnd\2. PrepareDatabaseRead.cs" />
+    <Compile Include="Program\BackEnd\3. OpenDatabaseConnection.cs" />
+    <Compile Include="Program\BackEnd\4. VerifyState.cs" />
+    <Compile Include="Program\BackEnd\5. UpdateDatabase-ActionStatus.cs" />
+    <Compile Include="Program\BackEnd\6. InvokeRobocopy.cs" />
+    <Compile Include="Program\BackEnd\7. UpdateDatabase-ActionStatus.cs" />
+    <Compile Include="Program\BackEnd\8. Cleanup.cs" />
+    <Compile Include="Program\BackEnd\_ Interface.cs" />
+    <Compile Include="Program\_InputBox\InputBox.xaml.cs">
       <DependentUpon>InputBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Program\MessageBox\AddButton.cs" />
-    <Compile Include="Program\MessageBox\BuildWindow.cs" />
-    <Compile Include="Program\MessageBox\MessageBox.xaml.cs">
+    <Compile Include="Program\_MessageBox\AddButton.cs" />
+    <Compile Include="Program\_MessageBox\BuildWindow.cs" />
+    <Compile Include="Program\_MessageBox\MessageBox.xaml.cs">
       <DependentUpon>MessageBox.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Program\MessageBox\Icons\IconEnum.cs" />
+    <Compile Include="Program\_MessageBox\Icons\IconEnum.cs" />
     <Compile Include="Program\ObtainConfiguration.cs" />
     <Compile Include="Program\LogBox.cs" />
     <Compile Include="UI\Animators\Buttons.cs" />
@@ -118,7 +135,7 @@
     <Compile Include="Util\Util.cs" />
     <Compile Include="WinAPI\DWM-API.cs" />
     <Compile Include="WinAPI\Win10Helper.cs" />
-    <Page Include="Program\InputBox\InputBox.xaml">
+    <Page Include="Program\_InputBox\InputBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -134,7 +151,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Program\MessageBox\MessageBox.xaml">
+    <Page Include="Program\_MessageBox\MessageBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -187,7 +204,6 @@
     </EmbeddedResource>
     <None Include="App\app.manifest" />
     <None Include="App\packages.config" />
-    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -214,21 +230,22 @@
     <Resource Include="resources\up.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Program\MessageBox\Icons\imageres_104.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_105.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_106.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_107.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_114.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_150.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_78.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_84.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_98.ico" />
-    <Resource Include="Program\MessageBox\Icons\imageres_99.ico" />
-    <Resource Include="Program\MessageBox\Icons\shell32_14.ico" />
-    <Resource Include="Program\MessageBox\Icons\shell32_16826.ico" />
-    <Resource Include="Program\MessageBox\Icons\shell32_1_16802.ico" />
-    <Resource Include="Program\MessageBox\Icons\shell32_48.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_104.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_105.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_106.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_107.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_114.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_150.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_78.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_84.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_98.ico" />
+    <Resource Include="Program\_MessageBox\Icons\imageres_99.ico" />
+    <Resource Include="Program\_MessageBox\Icons\shell32_14.ico" />
+    <Resource Include="Program\_MessageBox\Icons\shell32_16826.ico" />
+    <Resource Include="Program\_MessageBox\Icons\shell32_1_16802.ico" />
+    <Resource Include="Program\_MessageBox\Icons\shell32_48.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>call ..\..\Build-Incrementor.exe ..\..\Properties\AssemblyInfo.cs</PostBuildEvent>

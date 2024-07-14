@@ -11,6 +11,20 @@ namespace SyncMan
 {
     internal static class Util
     {
+        internal struct Result
+        {
+            internal Result(Int32 exitCode, String stdOut, String stdErr)
+            {
+                ExitCode = exitCode;
+                StdOut = stdOut;
+                StdErr = stdErr;
+            }
+
+            internal Int32 ExitCode;
+            internal String StdOut;
+            internal String StdErr;
+        }
+
         internal static async Task<Byte[]> RandomDotOrg_Get_16_Bytes()
         {
             try
@@ -85,6 +99,10 @@ namespace SyncMan
                     State.AccentColor[1] = data[5];
                     State.AccentColor[2] = data[6];
 
+                    State.TextSelectionColor[0] = data[12];
+                    State.TextSelectionColor[1] = data[13];
+                    State.TextSelectionColor[2] = data[14];
+
                     return;
                 }
             }
@@ -93,6 +111,83 @@ namespace SyncMan
             State.AccentColor[0] = 0x4c;
             State.AccentColor[1] = 0xc2;
             State.AccentColor[2] = 0xff;
+
+            State.TextSelectionColor[0] = 0x00;
+            State.TextSelectionColor[1] = 0x78;
+            State.TextSelectionColor[2] = 0xd4;
+        }
+
+        internal static Task WriteTemplate()
+        {
+
+
+
+
+
+            return Task.CompletedTask;
+        }
+
+
+
+        public static Result? Run(String path, String args = null, Boolean RunAs = false, Boolean redirectOutput = false, Boolean hiddenExecute = false, Boolean waitForExit = false, String workingDirectory = null)
+        {
+            using Process process = new();
+
+            process.StartInfo.FileName = path;
+
+            if (RunAs)
+            {
+                process.StartInfo.Verb = "runas";
+            }
+
+            if (hiddenExecute)
+            {
+                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                process.StartInfo.CreateNoWindow = true;
+            }
+
+            if (redirectOutput)
+            {
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+            }
+            else
+            {
+                process.StartInfo.UseShellExecute = true;
+                process.StartInfo.RedirectStandardOutput = false;
+                process.StartInfo.RedirectStandardError = false;
+            }
+
+            if (workingDirectory != null)
+            {
+                process.StartInfo.WorkingDirectory = workingDirectory;
+            }
+
+            if (args != null)
+            {
+                process.StartInfo.Arguments = args;
+            }
+
+            process.Start();
+
+            if (redirectOutput)
+            {
+                String stdOUT = process.StandardOutput.ReadToEnd();
+                String errOUT = process.StandardError.ReadToEnd();
+
+                process.WaitForExit();
+
+                return new(process.ExitCode, stdOUT, errOUT);
+            }
+            else if (waitForExit)
+            {
+                process.WaitForExit();
+
+                return new Result(process.ExitCode, null, null);
+            }
+
+            return null;
         }
     }
 }

@@ -20,5 +20,8 @@ namespace SyncMan
         internal static FileVersionInfo FileVersionInfo;
 
         internal static readonly Byte[] AccentColor = new Byte[3];
+        internal static readonly Byte[] TextSelectionColor = new Byte[3];
+
+        internal const String DatabaseName = "FileSync.db";
     }
 }

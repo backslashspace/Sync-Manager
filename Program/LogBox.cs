@@ -7,7 +7,29 @@ namespace SyncMan
 {
     internal class LogBox
     {
-        internal static void Add(String text = null, SolidColorBrush foreground = null, SolidColorBrush background = null, Boolean scrollToEnd = true, FontWeight fontWeight = default)
+        internal enum LogLevel : Byte
+        {
+            Message = 0,
+            Info = 1,
+            Warn = 2,
+            Error = 3
+        }
+
+        internal static void Add(String text, LogLevel messageType = LogLevel.Message)
+        {
+            SolidColorBrush foreground = messageType switch
+            {
+                LogLevel.Message => Brushes.White,
+                LogLevel.Info => Brushes.LightCyan,
+                LogLevel.Warn => Brushes.LightGoldenrodYellow,
+                LogLevel.Error => Brushes.Red,
+                _ => null,
+            };
+
+            UI.Dispatcher.Invoke(new Action(() => MainWindow.LogBoxAdd(text, foreground, null, true, default)));
+        }
+
+        internal static void Add(String text, SolidColorBrush foreground, SolidColorBrush background = null, Boolean scrollToEnd = true, FontWeight fontWeight = default)
         {
             UI.Dispatcher.Invoke(new Action(() => MainWindow.LogBoxAdd(text, foreground, background, scrollToEnd, fontWeight)));
         }

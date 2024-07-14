@@ -1,15 +1,16 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace SyncMan
 {
     public sealed partial class MainWindow : Window
     {
+        private static Boolean IsBussy = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -39,12 +40,11 @@ namespace SyncMan
             LogTextBox.Document = new();
             UI.MainWindow.LogTextBox.Document.Blocks.Add(paragraph);
 
-            
-
             await ObtainConfiguration().ConfigureAwait(true);
 
             Util.GetAccentColors();
             Application.Current.Resources["DarkIdleAccentColor"] = new SolidColorBrush(Color.FromArgb(0xff, State.AccentColor[0], State.AccentColor[1], State.AccentColor[2]));
+            Application.Current.Resources["TextSelectionColor"] = new SolidColorBrush(Color.FromArgb(0xff, State.TextSelectionColor[0], State.TextSelectionColor[1], State.TextSelectionColor[2]));
 
             UploadButton.IsEnabled = true;
             DownloadButton.IsEnabled = true;
@@ -53,49 +53,35 @@ namespace SyncMan
 
         // ###############################################################
 
-
-
-
-
-
-
-
-
-        private void Upload(object sender, RoutedEventArgs e)
+        private async void Upload(object sender, RoutedEventArgs e)
         {
+            if (IsBussy) return;
+            IsBussy = true;
+
             DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(96, 125, 146));
+
+            await Task.Run(static() => Backend.Upload()).ConfigureAwait(false);
+
+            IsBussy = false;
         }
 
-        private void Download(object sender, RoutedEventArgs e)
+        private async void Download(object sender, RoutedEventArgs e)
         {
+            if (IsBussy) return;
+            IsBussy = true;
+
             DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(110, 134, 104));
 
-            Style textBoxStyle = Application.Current.Resources["TextBox"] as Style;
+            await Task.Run(static() => Backend.Download()).ConfigureAwait(false);
 
-            textBoxStyle.Setters.Remove(new Setter(TextBox.ContextMenuProperty, null));
-            textBoxStyle.Setters.Add(new Setter(TextBox.ContextMenuProperty, new ContextMenu()));
-
-            Application.Current.Resources["TextBox"] = textBoxStyle;
-
-
+            IsBussy = false;
         }
 
         private void SetLocalAlias(object sender, RoutedEventArgs e)
         {
             DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(127, 127, 127));
 
-            InputBox.InputBox messageBox = new("Machine Alias", "Global machine identifier Tag", "<name>", State.Alias, "Set");
-            messageBox.ShowDialog();
-
-            if (messageBox.Result == null)
-            {
-                return;
-            }
-            else
-            {
-                Registry.SetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Sync Manager", "Alias", messageBox.Result, RegistryValueKind.String);
-                LogBox.Add($"Set machine alias to: {messageBox.Result}\n");
-            }
+            Backend.SetLocalAlias();
         }
     }
 }
