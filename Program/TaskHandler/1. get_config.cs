@@ -15,7 +15,7 @@ namespace SyncMan
             Success = 2
         }
 
-        internal class Parameter
+        internal sealed class Parameter
         {
             internal String DatabasePath = null;
             internal String DatabaseFilePath = null;
@@ -28,7 +28,7 @@ namespace SyncMan
         internal static Parameter ReadRunConfig()
         {
             Parameter parameter = new();
-            List<String> lines = new();
+            List<String> lines = new(6);
 
             try
             {

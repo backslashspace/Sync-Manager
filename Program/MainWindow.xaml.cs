@@ -29,8 +29,8 @@ namespace SyncMan
         {
             UI.MainWindowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
             DWMAPI.SetTheme(UI.MainWindowHandle, true);
-            DWMAPI.SetCaptionColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(0x20u, 0x20u, 0x20u));
-            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(127, 127, 127));
+            DWMAPI.SetCaptionColor(UI.MainWindowHandle, Util.COLORREFFromRGB(0x20u, 0x20u, 0x20u));
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.COLORREFFromRGB(127, 127, 127));
 
             ButtonAnimator.Initialize();
             ButtonAnimator.SecondaryButton.Hook(UploadButton);
@@ -58,7 +58,7 @@ namespace SyncMan
             if (IsBussy) return;
             IsBussy = true;
 
-            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(96, 125, 146));
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.COLORREFFromRGB(96, 125, 146));
 
             await Task.Run(static() => Backend.Upload()).ConfigureAwait(false);
 
@@ -70,7 +70,7 @@ namespace SyncMan
             if (IsBussy) return;
             IsBussy = true;
 
-            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(110, 134, 104));
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.COLORREFFromRGB(110, 134, 104));
 
             await Task.Run(static() => Backend.Download()).ConfigureAwait(false);
 
@@ -79,7 +79,7 @@ namespace SyncMan
 
         private void SetLocalAlias(object sender, RoutedEventArgs e)
         {
-            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.RGB_To_COLORREF(127, 127, 127));
+            DWMAPI.SetBorderColor(UI.MainWindowHandle, Util.COLORREFFromRGB(127, 127, 127));
 
             Backend.SetLocalAlias();
         }

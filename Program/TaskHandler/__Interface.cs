@@ -8,18 +8,27 @@ namespace SyncMan
 {
     internal static partial class Backend
     {
+        private enum Action : UInt16
+        {
+            Upload = 0,
+            Download = 1
+        }
+
         internal static Task Upload()
         {
             (Boolean success, Config.Parameter parameter) = GetConfig();
             if (!success) return Task.CompletedTask;
 
-            (success, Boolean isRemotePath) = PrepareDatabaseRead(parameter);
+            (success, Boolean isRemotePath) = PrepareDatabaseAccess(parameter);
             if (!success) return Task.CompletedTask;
 
             (success, SQLiteConnection databaseConnection) = OpenDatabaseConnection(parameter.DatabaseFilePath);
             if (!success) return Task.CompletedTask;
 
-            success = EnsureRepoState(databaseConnection);
+            success = VerifyDatabase(databaseConnection);
+            if (!success) return Task.CompletedTask;
+            
+            success = HandleLastTransactionState(databaseConnection, Action.Upload);
             if (!success) return Task.CompletedTask;
 
 
@@ -53,7 +62,7 @@ namespace SyncMan
 
         internal static void SetLocalAlias()
         {
-            InputBox.InputBox messageBox = new("Machine Alias", "Global machine identifier Tag", "<name>", State.Alias, "Set");
+            InputBox.InputBox messageBox = new("Machine MachineAlias", "Global machine identifier Tag", "<name>", State.MachineAlias.Alias, "Set");
             messageBox.ShowDialog();
 
             if (messageBox.Result == null)
@@ -62,14 +71,15 @@ namespace SyncMan
             }
             else
             {
-                Registry.SetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Sync Manager", "Alias", messageBox.Result, RegistryValueKind.String);
+                Registry.SetValue("HKEY_CURRENT_USER\\SOFTWARE\\Sync Manager", "MachineAlias", messageBox.Result, RegistryValueKind.String);
                 LogBox.Add($"Set machine alias to: {messageBox.Result}\n");
             }
         }
 
         // ##########################################################################
 
-        private static (Boolean success, Config.Parameter parameter) GetConfig()
+        // todo: refactor into get_config.cs file
+        private static ValueTuple<Boolean, Config.Parameter> GetConfig()
         {
             Config.Parameter parameter = Config.ReadRunConfig();
 

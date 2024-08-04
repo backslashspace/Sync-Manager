@@ -35,8 +35,8 @@ namespace InputBox
                 UserInputBox.IsKeyboardFocusedChanged -= TextBoxKeyboardFocusChanged;
             }
 
-            Cofirm.IsEnabled = false;
-            Cofirm.Content = confirmButtonText;
+            Confirm.IsEnabled = false;
+            Confirm.Content = confirmButtonText;
 
             UserInputBox.Focus();
 
@@ -75,11 +75,11 @@ namespace InputBox
             try
             {
                 SyncMan.DWMAPI.SetTheme(new System.Windows.Interop.WindowInteropHelper(this).Handle, true);
-                SyncMan.DWMAPI.SetCaptionColor(new System.Windows.Interop.WindowInteropHelper(this).Handle, SyncMan.Util.RGB_To_COLORREF(0x20u, 0x20u, 0x20u));
+                SyncMan.DWMAPI.SetCaptionColor(new System.Windows.Interop.WindowInteropHelper(this).Handle, SyncMan.Util.COLORREFFromRGB(0x20u, 0x20u, 0x20u));
             }
             catch { }
 
-            SyncMan.ButtonAnimator.SecondaryButton.Hook(Cofirm);
+            SyncMan.ButtonAnimator.SecondaryButton.Hook(Confirm);
             SyncMan.ButtonAnimator.SecondaryButton.Hook(Cancel);
         }
 
@@ -109,11 +109,11 @@ namespace InputBox
         {
             if (UserInputBox.Text == BoxHint || UserInputBox.Text == "")
             {
-                Cofirm.IsEnabled = false;
+                Confirm.IsEnabled = false;
             }
             else
             {
-                Cofirm.IsEnabled = true;
+                Confirm.IsEnabled = true;
             }
         }
 

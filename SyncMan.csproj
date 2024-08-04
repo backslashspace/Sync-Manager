@@ -109,15 +109,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Program\BackEnd\1. ReadConfig.cs" />
-    <Compile Include="Program\BackEnd\2. PrepareDatabaseRead.cs" />
-    <Compile Include="Program\BackEnd\3. OpenDatabaseConnection.cs" />
-    <Compile Include="Program\BackEnd\4. VerifyState.cs" />
-    <Compile Include="Program\BackEnd\5. UpdateDatabase-ActionStatus.cs" />
-    <Compile Include="Program\BackEnd\6. InvokeRobocopy.cs" />
-    <Compile Include="Program\BackEnd\7. UpdateDatabase-ActionStatus.cs" />
-    <Compile Include="Program\BackEnd\8. Cleanup.cs" />
-    <Compile Include="Program\BackEnd\_ Interface.cs" />
+    <Compile Include="Program\TaskHandler\1. get_config.cs" />
+    <Compile Include="Program\TaskHandler\2. prepare_database_access.cs" />
+    <Compile Include="Program\TaskHandler\3. open_database.cs" />
+    <Compile Include="Program\TaskHandler\4. verify_database.cs" />
+    <Compile Include="Program\TaskHandler\5. handle_current_transaction_state.cs" />
+    <Compile Include="Program\TaskHandler\6. set_new_database_state.cs" />
+    <Compile Include="Program\TaskHandler\7. invoke_robocopy.cs" />
+    <Compile Include="Program\TaskHandler\8. finalize_database_state.cs" />
+    <Compile Include="Program\TaskHandler\9. free_resources.cs" />
+    <Compile Include="Program\TaskHandler\DatabaseViews.cs" />
+    <Compile Include="Program\TaskHandler\__Interface.cs" />
+    <Compile Include="Program\NotifyUser.cs" />
     <Compile Include="Program\_InputBox\InputBox.xaml.cs">
       <DependentUpon>InputBox.xaml</DependentUpon>
     </Compile>

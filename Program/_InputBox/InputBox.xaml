@@ -30,7 +30,7 @@
             Margin="24,0,24,80"
             VerticalAlignment="Bottom" Height="34"/>
 
-        <Button x:Name="Cofirm" Style="{StaticResource Button_Secondary}"
+        <Button x:Name="Confirm" Style="{StaticResource Button_Secondary}"
             Click="ConfirmButton"
             VerticalAlignment="Bottom" HorizontalAlignment="Right"
             Height="32" Width="128"

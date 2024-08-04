@@ -9,60 +9,62 @@ namespace SyncMan
     {
         private static async Task ObtainConfiguration()
         {
-            State.MachineGuid = await ObtainGuid();
-            ObtainAlias();
+            try
+            {
+                await ObtainGuid();
 
-            // set ui alias
-            await UI.MainWindow.Dispatcher.BeginInvoke(static () => UI.MainWindow.MachineName.Text += State.Alias == null ? "<not set>" : State.Alias);
+                String userAlias = (String)Registry.GetValue("HKEY_CURRENT_USER\\SOFTWARE\\Sync Manager", "MachineAlias", null);
+
+                if (userAlias != null)
+                {
+                    State.MachineAlias.Alias = userAlias;
+                    State.MachineAlias.IsUserDefined = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Message.NotifyUser("Load error", $"An error occurred during initialization:\n\n{ex.Message}\n\n{ex.StackTrace}", MessageBox.MessageBox.Icons.Shield_Error);
+
+                Environment.Exit(-1);
+            }
+
+            UI.MainWindow.Dispatcher.Invoke(static () => UI.MainWindow.MachineName.Text = State.MachineAlias.Alias);
         }
 
         // ###############################################
 
-        private static void ObtainAlias()
+        private static async Task ObtainGuid()
         {
-            try
+            Object data = Registry.GetValue("HKEY_CURRENT_USER\\SOFTWARE\\Sync Manager", "machineID", null);
+
+            if (data != null && data.GetType() == typeof(Int64))
             {
-                State.Alias = (String)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Sync Manager", "Alias", null);
-            }
-            catch { }
-        }
+                State.MachineID = (Int64)data;
 
-        private static async Task<Guid> ObtainGuid()
-        {
-            Guid guid;
-
-            Byte[] data = (Byte[])Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Sync Manager", "Guid", null);
-
-            if (data == null || data.Length < 16)
-            {
-                LogBox.Add("Generating new Guid...\n", Brushes.LightCyan);
-
-                data = await Util.RandomDotOrg_Get_16_Bytes();
-                
-                if (data == null)
-                {
-                    guid = Guid.NewGuid();
-                    data = guid.ToByteArray();
-
-                    LogBox.Add($"Failed to generate new guid using random.org, using local fallback\nGuid: {guid}\n", Brushes.LightGoldenrodYellow);
-                }
-                else
-                {
-                    guid = new(data);
-
-                    LogBox.Add($"Generated new guid using random.org\nGuid: {guid}\n", Brushes.LightGreen);
-                }
-
-                Registry.SetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Sync Manager", "Guid", data, RegistryValueKind.Binary);
+                LogBox.Add($"Loaded Machine ID: {State.MachineID}\n", Brushes.LightCyan);
+                return;
             }
             else
             {
-                guid = new(data);
+                LogBox.Add("Generating new Machine ID...\n", Brushes.LightCyan);
 
-                LogBox.Add($"Loaded Guid: {guid}", Brushes.LightCyan);
+                Byte[] randomBytes;
+                if ((randomBytes = await Util.GetRandomBytes()) != null)
+                {
+                    State.MachineID = BitConverter.ToInt64(randomBytes, 0);
+                    LogBox.Add($"Generated new machine id using random.org\nID: {State.MachineID}\n", Brushes.LightGreen);
+                }
+                else
+                {
+                    new Random().NextBytes(randomBytes);
+                    State.MachineID = BitConverter.ToInt64(randomBytes, 0);
+                    LogBox.Add($"Failed to generate new machine id using random.org, using local fallback\nID: {State.MachineID}\n", Brushes.LightGoldenrodYellow);
+                }
+
+                Registry.SetValue("HKEY_CURRENT_USER\\SOFTWARE\\Sync Manager", "machineID", unchecked(State.MachineID), RegistryValueKind.QWord);
+
+                return;
             }
-
-            return guid;
         }
     }
 }

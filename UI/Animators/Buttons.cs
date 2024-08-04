@@ -134,7 +134,7 @@ namespace SyncMan
                 if (sender == null) return;
                 Button checkBox = sender as Button;
 
-                MouseEnter_Begin(checkBox);
+                MouseEnter_Begin(checkBox!);
             }
 
             private static void Button_MouseLeave(object sender, MouseEventArgs e)
@@ -158,7 +158,7 @@ namespace SyncMan
                 if (sender == null) { return; }
                 Button checkBox = sender as Button;
 
-                MouseUp_Begin(checkBox);
+                MouseUp_Begin(checkBox!);
             }
             #endregion
 

@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SyncMan
+namespace SyncMan.Program.BackEnd
 {
-    internal static partial class Backend
+    internal class _9
     {
-
     }
 }

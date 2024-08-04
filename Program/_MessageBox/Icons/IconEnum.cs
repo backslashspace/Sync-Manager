@@ -1,8 +1,10 @@
-﻿namespace MessageBox
+﻿using System;
+
+namespace MessageBox
 {
     public partial class MessageBox
     {
-        internal enum Icons
+        internal enum Icons : Byte
         {
             Gear = 0,
             Gear_Tick = 1,
