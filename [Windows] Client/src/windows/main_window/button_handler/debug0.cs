@@ -1,9 +1,7 @@
 ﻿using System;
 using BSS.Interop;
-using System.Security.AccessControl;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using System.Windows.Forms;
 
 internal static partial class MainWindow
 {
@@ -58,51 +56,52 @@ internal static partial class MainWindow
 
     }
 
-    internal unsafe static Int64 RetrieveMetadata(Char* ntPath, UInt16 pathLength, Byte* directoryInfoBuffer, UInt32* canPtr)
+    internal unsafe static Byte* RetrieveMetadata(String ntPath, Int64* bufferLength)
     {
-        //Log.Debug("struct: Node = " + sizeof(Node) + "\n", Log.Level.Verbose, "SanityChecks");
-        //Log.Debug("struct: File = " + sizeof(File) + "\n", Log.Level.Verbose, "SanityChecks");
-        //Log.Debug("struct: Directory = " + sizeof(Directory) + "\n", Log.Level.Verbose, "SanityChecks");
-        //Log.Debug("struct: EnumeratorStackItem = " + sizeof(EnumeratorStackFrame) + "\n\n", Log.Level.Verbose, "SanityChecks");
-
-        /****************************************************************************************/
-
         #region PREPARE
+        UInt16 pathLength = (UInt16)ntPath.Length;
         UInt16 pathLengthBytes = (UInt16)(pathLength << 1);
+        Char* pathBuffer = (Char*)NativeMemory.Alloc(65_536);
+        fixed (Char* ntPathPtr = &ntPath.GetPinnableReference())
+        {
+            Buffer.MemoryCopy(ntPathPtr, pathBuffer, pathLengthBytes, pathLengthBytes);
+        }
 
-        Handle eveHandle;
-        NtStatus ntStatus = NtDll.NtCreateEvent(&eveHandle, Constants.EVENT_ALL_ACCESS, null, Constants.EVENT_TYPE.SynchronizationEvent, false);
+        Handle syncEventHandle;
+        NtStatus ntStatus = NtDll.NtCreateEvent(&syncEventHandle, Constants.EVENT_ALL_ACCESS, null, Constants.EVENT_TYPE.SynchronizationEvent, false);
         if (Constants.STATUS_SUCCESS != ntStatus)
         {
             Log.Debug("Failed create NtEvent: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtOpenFile");
-            
-            return 0;
-        }
 
-        /****************************************************************************************/
+            NativeMemory.Free(pathBuffer);
+
+            return null;
+        }
 
         // todo: large pages?
         Int64 directoryInfoBufferOffset = 0;
         UInt32 enumeratorStackFrameIndex = 0;
         Byte* enumeratorWorkingBuffer = (Byte*)NativeMemory.Alloc(131_072);
-        EnumeratorStackFrame* enumeratorStack = (EnumeratorStackFrame*)NativeMemory.Alloc((UIntPtr)sizeof(EnumeratorStackFrame) * 18_384);
-        directoryInfoBuffer = (Byte*)NativeMemory.Alloc(24 * 1024 * 1024); // alloc last -> will be used in realloc
+        EnumeratorStackFrame* enumeratorStack = (EnumeratorStackFrame*)NativeMemory.Alloc((UIntPtr)sizeof(EnumeratorStackFrame) * 16_384);
+        Byte* directoryInfoBuffer = (Byte*)NativeMemory.Alloc(8 * 1024 * 1024); // alloc last -> will be used in realloc
         enumeratorStack->Node = (Node*)directoryInfoBuffer;
         enumeratorStack->ItemIndex = 0;
 
-        EnumeratorStackFrame* stackFrame = enumeratorStack;
         EnumeratorResult enumeratorResult = default;
-
-        /****************************************************************************************/
-
+        EnumeratorStackFrame* stackFrame = enumeratorStack;
         #endregion
 
     ENUMERATE_DIRECTORY:
-        if (!EnumerateDirectory(ntPath, pathLengthBytes, directoryInfoBuffer + directoryInfoBufferOffset, eveHandle, enumeratorWorkingBuffer, &enumeratorResult))
+        if (!EnumerateDirectory(pathBuffer, pathLengthBytes, directoryInfoBuffer + directoryInfoBufferOffset, syncEventHandle, enumeratorWorkingBuffer, &enumeratorResult))
         {
-            Log.Debug("EnumerateDirectoryToBuffer path was: " + Marshal.PtrToStringUni((IntPtr)ntPath, pathLength) + "\n", Log.Level.Error, "EnumerateDirectoryToBuffer");
-            _ = NtDll.NtClose(eveHandle);
-            return 0;
+            Log.Debug("EnumerateDirectoryToBuffer path was: " + Marshal.PtrToStringUni((IntPtr)pathBuffer, pathLength) + "\n", Log.Level.Error, "EnumerateDirectoryToBuffer");
+            
+            _ = NtDll.NtClose(syncEventHandle);
+            NativeMemory.Free(pathBuffer);
+            NativeMemory.Free(enumeratorStack);
+            NativeMemory.Free(enumeratorWorkingBuffer);
+
+            return null;
         }
 
         directoryInfoBufferOffset += enumeratorResult.AddedSize;
@@ -115,13 +114,13 @@ internal static partial class MainWindow
             pathLengthBytes -= stackFrame->PathPopLengthBytes;
             pathLength = (UInt16)(pathLengthBytes >>> 1);
 
-            if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_BUFF;
+            if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_FRAME_DATA;
         }
 
     // pass when come from sub directory
     SEARCH_SUBDIRECTORY_NODE:
 
-        if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_BUFF;
+        if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_FRAME_DATA;
 
         if (stackFrame->Node->Type == NodeType.Directory)
         {
@@ -129,10 +128,10 @@ internal static partial class MainWindow
             Directory* directory = (Directory*)stackFrame->Node;
 
             // prepare path for sub directory enumeration
-            ntPath[pathLength] = '\\';
+            pathBuffer[pathLength] = '\\';
             pathLength += 1;
             pathLengthBytes += 2;
-            Buffer.MemoryCopy(directory->Name, ntPath + pathLength, directory->NameLengthBytes, directory->NameLengthBytes);
+            Buffer.MemoryCopy(directory->Name, pathBuffer + pathLength, directory->NameLengthBytes, directory->NameLengthBytes);
             pathLengthBytes += directory->NameLengthBytes;
             pathLength = (UInt16)(pathLengthBytes >>> 1);
             stackFrame->PathPopLengthBytes = (UInt16)(directory->NameLengthBytes + 2);
@@ -155,17 +154,22 @@ internal static partial class MainWindow
             // set node to next node - move via byte offset
             stackFrame->Node = (Node*)((Byte*)stackFrame->Node + stackFrame->Node->NextItemOffset);
             ++stackFrame->ItemIndex;
+
             goto SEARCH_SUBDIRECTORY_NODE;
         }
 
-    END_OF_BUFF:
-        // reached end of buffer
-
+    END_OF_FRAME_DATA:
         if (enumeratorStackFrameIndex == 0)
         {
-            _ = NtDll.NtClose(eveHandle);
             Log.Debug("Done - " + directoryInfoBufferOffset + " bytes in buffer\n", Log.Level.Info, "Enumerator");
-            return directoryInfoBufferOffset;
+
+            _ = NtDll.NtClose(syncEventHandle);
+            NativeMemory.Free(pathBuffer);
+            NativeMemory.Free(enumeratorStack);
+            NativeMemory.Free(enumeratorWorkingBuffer);
+
+            *bufferLength = directoryInfoBufferOffset;
+            return directoryInfoBuffer;
         }
 
         --enumeratorStackFrameIndex;
@@ -173,7 +177,7 @@ internal static partial class MainWindow
         pathLengthBytes -= stackFrame->PathPopLengthBytes;
         pathLength = (UInt16)(pathLengthBytes >>> 1);
 
-        if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_BUFF;
+        if (stackFrame->ItemIndex == stackFrame->NumberOfItems) goto END_OF_FRAME_DATA;
         else goto SEARCH_SUBDIRECTORY_NODE;
     }
 
@@ -181,7 +185,7 @@ internal static partial class MainWindow
     private unsafe static Boolean EnumerateDirectory(Char* path, UInt16 pathLengthBytes, Byte* directoryInfoBuffer, Handle eveHandle, Byte* workingBuffer, EnumeratorResult* enumeratorResult)
     {
         #region OPEN_DIRECTORY
-        Handle handle;
+        Handle fileHandle;
         NtStatus ntStatus;
         IO_STATUS_BLOCK ioStatusBlock;
 
@@ -198,7 +202,7 @@ internal static partial class MainWindow
         objectAttributes.SecurityDescriptor = null;
         objectAttributes.SecurityQualityOfService = null;
 
-        ntStatus = NtDll.NtOpenFile(&handle, Constants.FILE_LIST_DIRECTORY | Constants.FILE_TRAVERSE, &objectAttributes, &ioStatusBlock, Constants.FILE_SHARE_READ | Constants.FILE_SHARE_WRITE | Constants.FILE_SHARE_DELETE, Constants.FILE_DIRECTORY_FILE);
+        ntStatus = NtDll.NtOpenFile(&fileHandle, Constants.FILE_LIST_DIRECTORY | Constants.FILE_TRAVERSE, &objectAttributes, &ioStatusBlock, Constants.FILE_SHARE_READ | Constants.FILE_SHARE_WRITE | Constants.FILE_SHARE_DELETE, Constants.FILE_DIRECTORY_FILE);
         if (ntStatus != Constants.STATUS_SUCCESS)
         {
             Log.Debug("Failed to open directory: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtOpenFile");
@@ -213,13 +217,14 @@ internal static partial class MainWindow
         /****************************************************************************************/
 
     QUERY:
-        ntStatus = NtDll.NtQueryDirectoryFile(handle, eveHandle, null, null, &ioStatusBlock, workingBuffer, 131_072, Constants.FILE_INFORMATION_CLASS.FileIdFullDirectoryInformation, false, null, false);
+        ntStatus = NtDll.NtQueryDirectoryFile(fileHandle, eveHandle, null, null, &ioStatusBlock, workingBuffer, 131_072, Constants.FILE_INFORMATION_CLASS.FileIdFullDirectoryInformation, false, null, false);
         if (ntStatus == Constants.STATUS_PENDING)
         {
             ntStatus = NtDll.NtWaitForSingleObject(eveHandle, false, 0);
             if (ntStatus != Constants.STATUS_SUCCESS)
             {
                 Log.Debug("WaitForSingleObject failed: " + ntStatus.ToString("X") + "\n", Log.Level.Error, "NtQueryDirectoryFile");
+                _ = NtDll.NtClose(fileHandle);
                 return false;
             }
 
@@ -230,23 +235,23 @@ internal static partial class MainWindow
         {
             if (ntStatus == Constants.STATUS_NO_MORE_FILES)
             {
-                _ = NtDll.NtClose(handle);
+                _ = NtDll.NtClose(fileHandle);
                 return true;
             }
             else if (ntStatus == Constants.STATUS_BUFFER_OVERFLOW)
             {
                 Log.Debug("NtQueryDF STATUS_BUFFER_OVERFLOW\n", Log.Level.Critical, "NtQueryDirectoryFile");
+                _ = NtDll.NtClose(fileHandle);
                 return false;
             }
             else
             {
                 Log.Debug("NtQueryDirectoryFile failed: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtQueryDirectoryFile");
+                _ = NtDll.NtClose(fileHandle);
                 return false;
             }
         }
         
-        /****************************************************************************************/
-
         UInt32 workingBufferPosition = 0;
 
     PROCESS:

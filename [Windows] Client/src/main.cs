@@ -1,63 +1,51 @@
-﻿using BSS.Interop;
-using System;
+﻿using System;
+using BSS.Interop;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 internal static partial class Program
 {
     [STAThread]
     private unsafe static Int32 Main(String[] args)
     {
-        UInt32 canary = 0xDEADBEEFu;
-
         Log.Initialize();
         ComWrappers.RegisterForMarshalling(WinFormsComInterop.WinFormsComWrappers.Instance);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
 
+        DebugX();
+
         DwmApi.Initialize();
+        MainWindow.Run();
+        
+        return 0;
+    }
 
+    
+    private unsafe static void DebugX() // X = Extreme
+    {
+        //Log.Debug("struct: Node = " + sizeof(Node) + "\n", Log.Level.Verbose, "SanityChecks");
+        //Log.Debug("struct: File = " + sizeof(File) + "\n", Log.Level.Verbose, "SanityChecks");
+        //Log.Debug("struct: Directory = " + sizeof(Directory) + "\n", Log.Level.Verbose, "SanityChecks");
+        //Log.Debug("struct: EnumeratorStackItem = " + sizeof(EnumeratorStackFrame) + "\n\n", Log.Level.Verbose, "SanityChecks");
 
-
-
-
-
-        const String path = "\\??\\C:\\Users\\dev0\\Desktop\\walktest";
-
-        Char* pathBuffer = stackalloc Char[32_767];
-        fixed (Char* pathPtr = &path.GetPinnableReference())
-        {
-            Buffer.MemoryCopy(pathPtr, pathBuffer, path.Length + path.Length, path.Length + path.Length);
-        }
+        /****************************************************************************************/
 
         Stopwatch stopwatch = new();
-
-        Byte* dirBuf = null;
-
-        
-
         stopwatch.Start();
-        Int64 byteCount = MainWindow.RetrieveMetadata(pathBuffer, (UInt16)path.Length, dirBuf, &canary);
+        Int64 directoryBufferLength = 0;
+        Byte* directoryBuffer = MainWindow.RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest", &directoryBufferLength);
         stopwatch.Stop();
 
         Kernel32.AllocConsole();
-        Console.WriteLine("\n\n" + byteCount + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms");
+        Console.WriteLine("\n\n" + directoryBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms");
 
-        //Thread.Sleep(1000);
-
-
-
-
-
-
-
-
-
-        //MainWindow.Run();
         Console.ReadLine();
-        return 0;
+
+        NativeMemory.Free(directoryBuffer);
+
+        Environment.Exit(0);
     }
 }
