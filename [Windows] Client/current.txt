@@ -1,0 +1,2 @@
+﻿todo: large pages
+-> AdjustTokenPrivileges
