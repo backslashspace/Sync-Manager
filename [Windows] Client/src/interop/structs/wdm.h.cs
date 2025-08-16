@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
 
 #pragma warning disable CS0649
 
@@ -24,4 +25,17 @@ internal ref struct FILE_STANDARD_INFORMATION
     internal UInt32 NumberOfLinks;
     internal Boolean DeletePending;
     internal Boolean Directory;
+}
+
+// https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-time_fields
+internal ref struct TIME_FIELDS
+{
+    internal UInt16 Year;        // range [1601...]
+    internal UInt16 Month;       // range [1..12]
+    internal UInt16 Day;         // range [1..31]
+    internal UInt16 Hour;        // range [0..23]
+    internal UInt16 Minute;      // range [0..59]
+    internal UInt16 Second;      // range [0..59]
+    internal UInt16 Milliseconds;// range [0..999]
+    internal UInt16 Weekday;     // range [0..6] == [Sunday..Saturday]
 }

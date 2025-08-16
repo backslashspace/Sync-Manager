@@ -27,6 +27,12 @@ namespace BSS.Interop
 
         /********************************************************/
 
+        // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtltimetotimefields
+        [LibraryImport("ntdll", EntryPoint = "RtlTimeToTimeFields", SetLastError = false)]
+        internal unsafe static partial void RtlTimeToTimeFields(UInt64* Time, TIME_FIELDS* TimeFields);
+
+        /********************************************************/
+
         // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntquerydirectoryfile
         [LibraryImport("ntdll", EntryPoint = "NtQueryDirectoryFile", SetLastError = false)]
         internal unsafe static partial NtStatus NtQueryDirectoryFile(Handle FileHandle, Handle Event, void* ApcRoutine, void* ApcContext, IO_STATUS_BLOCK* IoStatusBlock, void* FileInformation, UInt32 Length, Constants.FILE_INFORMATION_CLASS FileInformationClass, [MarshalAs(UnmanagedType.U1)] Boolean ReturnSingleEntry, UNICODE_STRING* FileName, [MarshalAs(UnmanagedType.U1)] Boolean RestartScan);

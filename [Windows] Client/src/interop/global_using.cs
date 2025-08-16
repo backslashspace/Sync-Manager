@@ -1,6 +1,5 @@
 ﻿global using Handle = System.UInt64;
 global using NtStatus = System.UInt32;
-global using NativeBoolean = System.Byte;
 // restore
 global using UInt32 = System.UInt32;
 global using UInt64 = System.UInt64;

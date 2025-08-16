@@ -2,8 +2,8 @@
 
 // https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime
 [StructLayout(LayoutKind.Sequential)]
-internal readonly ref struct FILETIME
+internal ref struct FILETIME
 {
-    internal readonly UInt32 dwLowDateTime;
-    internal readonly UInt32 dwHighDateTime;
+    internal UInt32 dwLowDateTime;
+    internal UInt32 dwHighDateTime;
 }

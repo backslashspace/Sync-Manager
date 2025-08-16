@@ -1,2 +1,6 @@
-﻿todo: large pages
--> AdjustTokenPrivileges
+﻿todo:
+	- large pages
+
+current:
+	- remove endofdirectory
+	- add ptr to every node -> parent dir node (for path name)
