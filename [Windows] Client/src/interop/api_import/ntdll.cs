@@ -49,6 +49,10 @@ namespace BSS.Interop
         [LibraryImport("ntdll", EntryPoint = "NtWaitForSingleObject", SetLastError = false)]
         internal unsafe static partial NtStatus NtWaitForSingleObject(Handle Handle, [MarshalAs(UnmanagedType.U1)] Boolean Alertable, UInt64 Timeout);
 
+        // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntfscontrolfile
+        [LibraryImport("ntdll", EntryPoint = "NtFsControlFile", SetLastError = false)]
+        internal unsafe static partial NtStatus NtFsControlFile(Handle FileHandle, Handle Event, void* ApcRoutine, void* ApcContext, IO_STATUS_BLOCK* IoStatusBlock, UInt32 FsControlCode, void* InputBuffer, UInt32 InputBufferLength, void* OutputBuffer, UInt32 OutputBufferLength);
+
         /********************************************************/
 
         // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntallocatevirtualmemory

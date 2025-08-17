@@ -18,6 +18,7 @@ internal ref struct IO_STATUS_BLOCK
 }
 
 // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_file_standard_information
+[StructLayout(LayoutKind.Sequential)]
 internal ref struct FILE_STANDARD_INFORMATION
 {
     internal UInt64 AllocationSize;
@@ -28,6 +29,7 @@ internal ref struct FILE_STANDARD_INFORMATION
 }
 
 // https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-time_fields
+[StructLayout(LayoutKind.Sequential)]
 internal ref struct TIME_FIELDS
 {
     internal UInt16 Year;        // range [1601...]

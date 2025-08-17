@@ -123,5 +123,85 @@
         internal const UInt32 MEM_EXTENDED_PARAMETER_NONPAGED_HUGE = 0x00000010u;
         internal const UInt32 MEM_EXTENDED_PARAMETER_SOFT_FAULT_PAGES = 0x00000020u;
         internal const UInt32 MEM_EXTENDED_PARAMETER_EC_CODE = 0x00000040u;
+
+        //
+        // The reparse tags are a DWORD. The 32 bits are laid out as follows:
+        //
+        //   3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1
+        //   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+        //  +-+-+-+-+-----------------------+-------------------------------+
+        //  |M|R|N|D|     Reserved bits     |       Reparse Tag Value       |
+        //  +-+-+-+-+-----------------------+-------------------------------+
+        //
+        // M is the Microsoft bit. When set to 1, it denotes a tag owned by Microsoft.
+        //   All ISVs must use a tag with a 0 in this position.
+        //   Note: If a Microsoft tag is used by non-Microsoft software, the
+        //   behavior is not defined.
+        //
+        // R is reserved.  Must be zero for non-Microsoft tags.
+        //
+        // N is name surrogate. When set to 1, the file represents another named
+        //   entity in the system.
+        //
+        // D is the directory bit. When set to 1, indicates that any directory
+        //   with this reparse tag can have children. Has no special meaning when used
+        //   on a non-directory file. Not compatible with the name surrogate bit.
+        //
+        // The M and N bits are OR-able.
+        // The following macros check for the M and N bit values:
+        //
+
+        //
+        // Macro to determine whether a reparse point tag corresponds to a tag
+        // owned by Microsoft.
+        //
+
+        internal const UInt32 IO_REPARSE_TAG_RESERVED_INVALID = 0xC0008000u;
+        internal const UInt32 IO_REPARSE_TAG_MOUNT_POINT = 0xA0000003u;
+        internal const UInt32 IO_REPARSE_TAG_HSM = 0xC0000004u;
+        internal const UInt32 IO_REPARSE_TAG_HSM2 = 0x80000006u;
+        internal const UInt32 IO_REPARSE_TAG_SIS = 0x80000007u;
+        internal const UInt32 IO_REPARSE_TAG_WIM = 0x80000008u;
+        internal const UInt32 IO_REPARSE_TAG_CSV = 0x80000009u;
+        internal const UInt32 IO_REPARSE_TAG_DFS = 0x8000000Au;
+        internal const UInt32 IO_REPARSE_TAG_SYMLINK = 0xA000000Cu;
+        internal const UInt32 IO_REPARSE_TAG_DFSR = 0x80000012u;
+        internal const UInt32 IO_REPARSE_TAG_DEDUP = 0x80000013u;
+        internal const UInt32 IO_REPARSE_TAG_NFS = 0x80000014u;
+        internal const UInt32 IO_REPARSE_TAG_FILE_PLACEHOLDER = 0x80000015u;
+        internal const UInt32 IO_REPARSE_TAG_WOF = 0x80000017u;
+        internal const UInt32 IO_REPARSE_TAG_WCI = 0x80000018u;
+        internal const UInt32 IO_REPARSE_TAG_WCI_1 = 0x90001018u;
+        internal const UInt32 IO_REPARSE_TAG_GLOBAL_REPARSE = 0xA0000019u;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD = 0x9000001Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_1 = 0x9000101Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_2 = 0x9000201Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_3 = 0x9000301Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_4 = 0x9000401Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_5 = 0x9000501Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_6 = 0x9000601Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_7 = 0x9000701Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_8 = 0x9000801Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_9 = 0x9000901Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_A = 0x9000A01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_B = 0x9000B01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_C = 0x9000C01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_D = 0x9000D01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_E = 0x9000E01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_F = 0x9000F01Au;
+        internal const UInt32 IO_REPARSE_TAG_CLOUD_MASK = 0x0000F000u;
+        internal const UInt32 IO_REPARSE_TAG_APPEXECLINK = 0x8000001Bu;
+        internal const UInt32 IO_REPARSE_TAG_PROJFS = 0x9000001Cu;
+        internal const UInt32 IO_REPARSE_TAG_STORAGE_SYNC = 0x8000001Eu;
+        internal const UInt32 IO_REPARSE_TAG_WCI_TOMBSTONE = 0xA000001Fu;
+        internal const UInt32 IO_REPARSE_TAG_UNHANDLED = 0x80000020u;
+        internal const UInt32 IO_REPARSE_TAG_ONEDRIVE = 0x80000021u;
+        internal const UInt32 IO_REPARSE_TAG_PROJFS_TOMBSTONE = 0xA0000022u;
+        internal const UInt32 IO_REPARSE_TAG_AF_UNIX = 0x80000023u;
+        internal const UInt32 IO_REPARSE_TAG_STORAGE_SYNC_FOLDER = 0x90000027u;
+        internal const UInt32 IO_REPARSE_TAG_WCI_LINK = 0xA0000027u;
+        internal const UInt32 IO_REPARSE_TAG_WCI_LINK_1 = 0xA0001027u;
+        internal const UInt32 IO_REPARSE_TAG_DATALESS_CIM = 0xA0000028u;
+
     }
 }

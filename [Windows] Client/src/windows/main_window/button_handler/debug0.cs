@@ -11,54 +11,9 @@ internal static partial class MainWindow
 
     }
 
-    internal unsafe static void* AllocLargePageTest()
+    internal unsafe static void TraversDirectoryBuffer(Byte* directoryBuffer, UInt64 length)
     {
-        Handle processToken;
-        TOKEN_PRIVILEGES tokenPrivileges;
-        tokenPrivileges.PrivilegeCount = 1;
-        tokenPrivileges.Privileges.Attributes = Constants.SE_PRIVILEGE_ENABLED;
-
-        NtStatus ntStatus = NtDll.NtOpenProcessToken(unchecked((UInt64)(-1L)), Constants.TOKEN_ADJUST_PRIVILEGES | Constants.TOKEN_QUERY, &processToken);
-        if (ntStatus != Constants.STATUS_SUCCESS)
-        {
-            Log.Debug("NtOpenProcessToken failed: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Error, "LargePage");
-            return null;
-        }
-
-        fixed (Char* ptr = &"SeLockMemoryPrivilege".GetPinnableReference())
-        {
-            if (!Advapi32.LookupPrivilegeValueW(null, ptr, &tokenPrivileges.Privileges.Luid))
-            {
-                Log.Debug("LookupPrivilegeValueW failed: " + Marshal.GetLastPInvokeErrorMessage() + "\n", Log.Level.Error, "LargePage");
-                return null;
-            }
-        }
-
-        ntStatus = NtDll.NtAdjustPrivilegesToken(processToken, false, &tokenPrivileges, (UInt32)sizeof(TOKEN_PRIVILEGES), null, null);
-        if (ntStatus != Constants.STATUS_SUCCESS)
-        {
-            Log.Debug("NtAdjustPrivilegesToken failed: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Error, "LargePage");
-            return null;
-        }
-
-
-
-        void* pointer = null;
-        UInt64 size = (8ul * 1024ul * 1024ul);
-
-        ntStatus = NtDll.NtAllocateVirtualMemory(unchecked((UInt64)(-1L)), &pointer, 0, &size, Constants.MEM_RESERVE | Constants.MEM_COMMIT | Constants.MEM_LARGE_PAGES, Constants.PAGE_READWRITE);
-        if (ntStatus != Constants.STATUS_SUCCESS)
-        {
-            Log.Debug("NtAllocateVirtualMemory failed to allocate memory: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Error, "LargePage");
-            return null;
-        }
-
-        return pointer;
-    }
-
-    internal unsafe static void TraversDirectoryBuffer(Byte* directoryBuffer, Int64 length)
-    {
-        Int64 offset = 0;
+        UInt64 offset = 0;
         Char* path = stackalloc Char[32_768];
         Directory** workingTree = stackalloc Directory*[16_384];
 

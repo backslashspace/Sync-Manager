@@ -1,6 +1,14 @@
 ﻿todo:
-	- large pages
+	- large pages => no gain with large pages
 
 current:
-	- remove endofdirectory
-	- add ptr to every node -> parent dir node (for path name)
+	- link handling
+	- file hashing
+
+
+
+
+
+
+
+ntStatus = NtDll.NtOpenFile(&fileHandle, Constants.FILE_READ_DATA | Constants.SYNCHRONIZE, &objectAttributes, &ioStatusBlock, Constants.FILE_SHARE_READ, Constants.FILE_SEQUENTIAL_ONLY | Constants.FILE_SYNCHRONOUS_IO_NONALERT | Constants.FILE_OPEN_REPARSE_POINT);

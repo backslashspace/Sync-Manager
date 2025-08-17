@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.Intrinsics.X86;
+﻿using System.Runtime.Intrinsics.X86;
 
-internal static partial class Program
+internal static partial class FilesystemEnumerator
 {
     /// <summary>
     /// Initial value must be <see href="0xFFFFFFFFul"/><br/>
@@ -10,7 +9,8 @@ internal static partial class Program
     /// <see langword="*crc32c = (UInt32) crc;"/>
     /// </summary>
     /// <remarks>
-    /// Verified using <see href="https://md5calc.com/hash/crc32c"/>
+    /// Verified using <see href="https://md5calc.com/hash/crc32c"/><br/>
+    /// Uses CPU Intrinsics
     /// </remarks>
     /// <param name="buffer"></param>
     /// <param name="crc32c"></param>

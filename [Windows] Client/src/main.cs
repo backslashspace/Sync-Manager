@@ -1,13 +1,8 @@
-﻿using BSS.Interop;
-using System;
+﻿using System;
+using BSS.Interop;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
-using System.Security.Cryptography;
-using System.Windows.Forms;
 using static FilesystemEnumerator;
+using System.Runtime.InteropServices;
 
 internal static partial class Program
 {
@@ -19,9 +14,7 @@ internal static partial class Program
         //Application.EnableVisualStyles();
         //Application.SetCompatibleTextRenderingDefault(false);
 
-        DebugX();
-
-        return 0;
+        return DebugX();
 
         DwmApi.Initialize();
         MainWindow.Run();
@@ -29,14 +22,7 @@ internal static partial class Program
         return 0;
     }
 
-    private unsafe static void DuceTimeString(Char* ehh)
-    {
-       
-    }
-
-    
-
-    private unsafe static void DebugX() // X = Extreme
+    private unsafe static Int32 DebugX() // X = Extreme
     {
         Log.Debug("struct: Node = " + sizeof(Node) + "\n", Log.Level.Verbose, "SanityChecks");
         Log.Debug("struct: File = " + sizeof(File) + "\n", Log.Level.Verbose, "SanityChecks");
@@ -49,22 +35,52 @@ internal static partial class Program
 
         /****************************************************************************************/
 
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
-        Int64 directoryBufferLength = 0;
-        Byte* directoryBuffer = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest", &directoryBufferLength);
+
+
+
+
+
+        
+
+        const UInt64 allocationSize = 8ul * 1024ul * 1024ul;
+        const UInt64 linkAllocationSize = 1ul * 1024ul * 1024ul;
+
+        UInt64 usedLinkInfoBufferLength = 0;
+        UInt64 usedDirectoryInfoBufferLength = 0;
+
+        MetaData metaData;
+        metaData.DirectoryInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)allocationSize);
+        metaData.DirectoryInfoBufferSize = allocationSize;
+        metaData.UsedDirectoryInfoBufferLength = &usedDirectoryInfoBufferLength;
+        metaData.LinkInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)linkAllocationSize);
+        metaData.LinkInfoBufferSize = linkAllocationSize;
+        metaData.UsedLinkInfoBufferLength = &usedLinkInfoBufferLength;
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest", &metaData);
         stopwatch.Stop();
-        Console.WriteLine("\n\n" + directoryBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms");
+
+        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX");
+
+        MainWindow.TraversDirectoryBuffer(metaData.DirectoryInfoBuffer, *metaData.UsedDirectoryInfoBufferLength);
+
+
+
+
+
+
+
+
+
+
+
+
 
         Console.ReadLine();
 
-        MainWindow.TraversDirectoryBuffer(directoryBuffer, directoryBufferLength);
+        NativeMemory.Free(metaData.DirectoryInfoBuffer);
+        NativeMemory.Free(metaData.LinkInfoBuffer);
 
-
-        Console.ReadLine();
-
-        NativeMemory.Free(directoryBuffer);
-
-        Environment.Exit(0);
+        return 0;
     }
 }

@@ -2,7 +2,6 @@
 {
     internal static partial class Constants
     {
-        // fileapi.h
         internal const UInt32 CREATE_NEW = 1u;
         internal const UInt32 CREATE_ALWAYS = 2u;
         internal const UInt32 OPEN_EXISTING = 3u;
