@@ -23,13 +23,15 @@ internal static partial class FilesystemEnumerator
         objectAttributes.SecurityDescriptor = null;
         objectAttributes.SecurityQualityOfService = null;
 
-        ntStatus = NtDll.NtOpenFile(&fileHandle, Constants.FILE_READ_ATTRIBUTES | Constants.FILE_READ_EA | Constants.SYNCHRONIZE, &objectAttributes, &ioStatusBlock, Constants.FILE_SHARE_READ, Constants.FILE_SYNCHRONOUS_IO_NONALERT | Constants.FILE_OPEN_REPARSE_POINT);
+        ntStatus = NtDll.NtOpenFile(&fileHandle, Constants.FILE_READ_ATTRIBUTES | Constants.SYNCHRONIZE, &objectAttributes, &ioStatusBlock, Constants.FILE_SHARE_READ, Constants.FILE_SYNCHRONOUS_IO_NONALERT | Constants.FILE_OPEN_REPARSE_POINT);
         if (ntStatus != Constants.STATUS_SUCCESS)
         {
             Log.Debug("Failed to open: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtOpenFile");
             return false;
         }
         #endregion
+
+        /****************************************************************************************/
 
         FILE_ATTRIBUTE_TAG_INFORMATION fileTagInformation;
         ntStatus = NtDll.NtQueryInformationFile(fileHandle, &ioStatusBlock, &fileTagInformation, (UInt32)sizeof(FILE_ATTRIBUTE_TAG_INFORMATION), Constants.FILE_INFORMATION_CLASS.FileAttributeTagInformation);
@@ -39,46 +41,56 @@ internal static partial class FilesystemEnumerator
             return false;
         }
 
-        if ((fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_MOUNT_POINT) == Constants.IO_REPARSE_TAG_MOUNT_POINT)
+        ntStatus = NtDll.NtFsControlFile(fileHandle, 0, null, null, &ioStatusBlock, Constants.FSCTL_GET_REPARSE_POINT, null, 0, enumeratorContext->NtFsControlFileWorkingBuffer, EnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE);
+        if (ntStatus != Constants.STATUS_SUCCESS)
         {
-            ntStatus = NtDll.NtFsControlFile(fileHandle, 0, null, null, &ioStatusBlock, Constants.FSCTL_GET_REPARSE_POINT, null, 0, enumeratorContext->NtFsControlFileWorkingBuffer, EnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE);
-            if (ntStatus != Constants.STATUS_SUCCESS)
-            {
-                Log.Debug("FSCTL_GET_REPARSE_POINT failed with: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtFsControlFile");
-                return false;
-            }
-
-            REPARSE_DATA_BUFFER* reparseDataBuffer = (REPARSE_DATA_BUFFER*)enumeratorContext->NtFsControlFileWorkingBuffer;
-
-
-
+            Log.Debug("FSCTL_GET_REPARSE_POINT failed with: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtFsControlFile");
+            return false;
         }
-        else if ((fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_SYMLINK) == Constants.IO_REPARSE_TAG_SYMLINK)
-        {
-            ntStatus = NtDll.NtFsControlFile(fileHandle, 0, null, null, &ioStatusBlock, Constants.FSCTL_GET_REPARSE_POINT, null, 0, enumeratorContext->NtFsControlFileWorkingBuffer, EnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE);
-            if (ntStatus != Constants.STATUS_SUCCESS)
-            {
-                Log.Debug("Failed with: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtQueryInformationFile");
-                return false;
-            }
 
-            REPARSE_DATA_BUFFER* reparseDataBuffer = (REPARSE_DATA_BUFFER*)enumeratorContext->NtFsControlFileWorkingBuffer;
+        Boolean isMountPoint = (fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_MOUNT_POINT) == Constants.IO_REPARSE_TAG_MOUNT_POINT;
+        Boolean isSymLink = (fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_SYMLINK) == Constants.IO_REPARSE_TAG_SYMLINK;
+        REPARSE_DATA_BUFFER* reparseDataBuffer = (REPARSE_DATA_BUFFER*)enumeratorContext->NtFsControlFileWorkingBuffer;
+
+        /****************************************************************************************/
+
+        Link* link = (Link*)metaData->LinkInfoBuffer + enumeratorContext->LinkInfoBufferOffset;
+        link->Attributes = fileTagInformation.FileAttributes;
+
+        if (isMountPoint)
+        {
+            UInt32 itemSize = (Link.RAW_SIZE + reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength + ntPathLengthBytes + 3u) & ~3u;
+            link->NextItemOffset = itemSize;
+            link->Type = NodeType.Junction;
+            link->LinkNtPathLength = ntPathLengthBytes;
+            link->TargetNtPathLength = reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength;
+
+            Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
+            Buffer.MemoryCopy(reparseDataBuffer->MountPointReparseBuffer.PathBuffer, link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength, reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength);
+
+            enumeratorContext->LinkInfoBufferOffset += itemSize;
+        }
+        else if (isSymLink)
+        {
+            UInt32 itemSize = (Link.RAW_SIZE + reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength + ntPathLengthBytes + 3u) & ~3u;
+            link->NextItemOffset = itemSize;
+            link->Type = NodeType.SymbolicLink;
+            link->LinkNtPathLength = ntPathLengthBytes;
+            link->TargetNtPathLength = reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength;
+
+            Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
+            Buffer.MemoryCopy(reparseDataBuffer->SymbolicLinkReparseBuffer.PathBuffer, link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength, reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength);
+
+            enumeratorContext->LinkInfoBufferOffset += itemSize;
         }
         else
         {
-            throw new Exception("weird reparse tag found");
+            Log.Debug("ReparseTag was not a SymLink or MountPoint\n", Log.Level.Error, "FILE_ATTRIBUTE_TAG_INFORMATION");
+            _ = NtDll.NtClose(fileHandle);
+            return false;
         }
 
-
-
-
-
-
-
         _ = NtDll.NtClose(fileHandle);
-
-        return false;
+        return true;
     }
-
-    
 }

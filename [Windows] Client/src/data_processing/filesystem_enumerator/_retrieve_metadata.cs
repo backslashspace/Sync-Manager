@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 internal static partial class FilesystemEnumerator
 {
     // iterative DFS for directory to flat buffer - for realloc support change X->Node from ptr to offset in buffer etc.
+    // uses pointer aliasing instead of unions (yeeh)
     internal unsafe static Boolean RetrieveMetadata(String ntPath, MetaData* metaData)
     {
         #region PREPARE
@@ -35,13 +36,13 @@ internal static partial class FilesystemEnumerator
         enumeratorStack->Node = (Node*)metaData->DirectoryInfoBuffer;
         enumeratorStack->ItemIndex = 0u;
 
-        Directory* parentNode = null;
         EnumeratorResult enumeratorResult = default;
         EnumeratorStackFrame* stackFrame = enumeratorStack;
-    #endregion
+        UInt64 parentNodeBaseOffset = Constants.INVALID_HANDLE_VALUE;
+        #endregion
 
     ENUMERATE_DIRECTORY:
-        if (!EnumerateDirectory(pathBuffer, pathLengthBytes, parentNode, &enumeratorContext, metaData, &enumeratorResult))
+        if (!EnumerateDirectory(pathBuffer, pathLengthBytes, parentNodeBaseOffset, &enumeratorContext, metaData, &enumeratorResult))
         {
             Log.Debug("EnumerateDirectoryToBuffer path was: " + Marshal.PtrToStringUni((IntPtr)pathBuffer, pathLength) + "\n", Log.Level.Error, "EnumerateDirectoryToBuffer");
 
@@ -51,13 +52,16 @@ internal static partial class FilesystemEnumerator
             NativeMemory.Free(enumeratorContext.NtFsControlFileWorkingBuffer);
             NativeMemory.Free(enumeratorContext.NtQueryDirectoryFileWorkingBuffer);
 
+            *metaData->UsedLinkInfoBufferLength = enumeratorContext.LinkInfoBufferOffset;
+            *metaData->UsedDirectoryInfoBufferLength = enumeratorContext.DirectoryInfoBufferOffset;
+
             return false;
         }
 
         enumeratorContext.DirectoryInfoBufferOffset += enumeratorResult.AddedSize;
         stackFrame->NumberOfItems = enumeratorResult.NumberOfItems;
 
-        if (!enumeratorResult.SawDirectory)
+        if (!enumeratorResult.SawSubDirectory)
         {
             --enumeratorStackFrameIndex;
             stackFrame = enumeratorStack + enumeratorStackFrameIndex;
@@ -83,7 +87,7 @@ internal static partial class FilesystemEnumerator
             pathLengthBytes += directory->NameLengthBytes;
             pathLength = (UInt16)(pathLengthBytes >>> 1);
             stackFrame->PathPopLengthBytes = (UInt16)(directory->NameLengthBytes + 2);
-            parentNode = directory;
+            parentNodeBaseOffset = (UInt64)directory - (UInt64)metaData->DirectoryInfoBuffer;
 
             // set node to next node - move via byte offset
             stackFrame->Node = (Node*)((Byte*)stackFrame->Node + stackFrame->Node->NextItemOffset);
@@ -94,22 +98,6 @@ internal static partial class FilesystemEnumerator
 
             stackFrame->ItemIndex = 0u;
             stackFrame->Node = (Node*)(metaData->DirectoryInfoBuffer + enumeratorContext.DirectoryInfoBufferOffset);
-
-            if ((enumeratorContext.DirectoryInfoBufferOffset + (1ul * 1024ul * 1024ul)) > metaData->DirectoryInfoBufferSize)
-            {
-                Log.Debug("DirectoryInfoBufferSize to small, can not continue - Increase buffer size and try again: allocation size: " + metaData->DirectoryInfoBufferSize + ", buffer size: " + enumeratorContext.DirectoryInfoBufferOffset + ", abort if difference is less than 1MiB\n", Log.Level.Error, "Enumerator");
-
-                _ = NtDll.NtClose(enumeratorContext.SynchronizationEventHandle);
-                NativeMemory.Free(pathBuffer);
-                NativeMemory.Free(enumeratorStack);
-                NativeMemory.Free(enumeratorContext.NtFsControlFileWorkingBuffer);
-                NativeMemory.Free(enumeratorContext.NtQueryDirectoryFileWorkingBuffer);
-
-                *metaData->UsedLinkInfoBufferLength = enumeratorContext.LinkInfoBufferOffset;
-                *metaData->UsedDirectoryInfoBufferLength = enumeratorContext.DirectoryInfoBufferOffset;
-
-                return false;
-            }
 
             goto ENUMERATE_DIRECTORY;
         }

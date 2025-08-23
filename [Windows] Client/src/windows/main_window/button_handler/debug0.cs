@@ -1,12 +1,16 @@
 ﻿using System;
 using BSS.Interop;
 using static FilesystemEnumerator;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 internal static partial class MainWindow
 {
     internal unsafe static void Debug(Object? sender, EventArgs e)
+    {
+
+    }
+
+    internal unsafe static void TraversLinkBuffer(Byte* linkBuffer, UInt64 length)
     {
 
     }
@@ -20,7 +24,9 @@ internal static partial class MainWindow
     NEXT:
         Node* node = (Node*)(directoryBuffer + offset);
 
-        UInt16 pathLengthBytes = GetPath(path, node, workingTree);
+        UInt16 pathLengthBytes;
+
+        pathLengthBytes = GetPath(path, node->ParentDirectoryBaseOffset, directoryBuffer, workingTree);
 
         if (node->Type == NodeType.File)
         {
@@ -49,31 +55,34 @@ internal static partial class MainWindow
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe static UInt16 GetPath(Char* path, Node* node, Directory** workingTree)
+    private unsafe static UInt16 GetPath(Char* path, UInt64 parentDirectoryBaseOffset, Byte* directoryBuffer, Directory** directoryStack)
     {
-        if (node->ParentDirectory == null) return 0;
+        if (parentDirectoryBaseOffset == Constants.INVALID_HANDLE_VALUE) return 0;
 
-        UInt16 length = 0;
         UInt16 offset = 0;
-        workingTree[0] = node->ParentDirectory;
+        UInt16 position = 0;
 
-    FIND_PARENT:
-        Directory* directoryNode = workingTree[length]->ParentDirectory;
-        ++length;
-        workingTree[length] = directoryNode;
-        if (directoryNode != null)
-        {
-            goto FIND_PARENT;
-        }
+        directoryStack[0] = (Directory*)(directoryBuffer + parentDirectoryBaseOffset);
+        if (directoryStack[0]->ParentDirectoryBaseOffset == Constants.INVALID_HANDLE_VALUE) goto FILL_BUFFER;
+
+    ADD_PARENT:
+        Directory* directoryNode = (Directory*)(directoryBuffer + directoryStack[position]->ParentDirectoryBaseOffset);
+
+        ++position;
+        directoryStack[position] = directoryNode;
+        if (directoryNode->ParentDirectoryBaseOffset != Constants.INVALID_HANDLE_VALUE) goto ADD_PARENT;
 
     FILL_BUFFER:
-        path[offset] = '\\';
-        ++offset;
-        --length;
+        path[offset++] = '\\';
 
-        Buffer.MemoryCopy(workingTree[length]->Name, path + offset, 16_384, workingTree[length]->NameLengthBytes);
-        offset += (UInt16)(workingTree[length]->NameLengthBytes >>> 1);
-        if (length != 0) goto FILL_BUFFER;
+        Buffer.MemoryCopy(directoryStack[position]->Name, path + offset, 16_384, directoryStack[position]->NameLengthBytes);
+        offset += (UInt16)(directoryStack[position]->NameLengthBytes >>> 1);
+        
+        if (position != 0)
+        {
+            --position;
+            goto FILL_BUFFER;
+        }
 
         return (UInt16)(offset << 1);
     }

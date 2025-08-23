@@ -60,9 +60,13 @@ internal static partial class Program
         Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest", &metaData);
         stopwatch.Stop();
 
-        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX");
+        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX-Directories");
+        Log.Debug(*metaData.UsedLinkInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n\n", Log.Level.Info, "DebugX-Links");
+
+        Console.ReadLine();
 
         MainWindow.TraversDirectoryBuffer(metaData.DirectoryInfoBuffer, *metaData.UsedDirectoryInfoBufferLength);
+        MainWindow.TraversLinkBuffer(metaData.LinkInfoBuffer, *metaData.UsedLinkInfoBufferLength);
 
 
 
