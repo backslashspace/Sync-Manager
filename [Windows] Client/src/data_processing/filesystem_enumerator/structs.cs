@@ -61,9 +61,9 @@ internal unsafe ref struct Link
 
     internal UInt32 NextItemOffset;
     internal NodeType Type;
-    internal UInt16 TargetNtPathLength;
+    internal UInt16 TargetNtPathLengthBytes;
     internal UInt32 Attributes;
-    internal UInt16 LinkNtPathLength;
+    internal UInt16 LinkNtPathLengthBytes;
     internal unsafe fixed Char Paths[1]; // link, target
 }
 

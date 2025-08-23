@@ -35,13 +35,6 @@ internal static partial class Program
 
         /****************************************************************************************/
 
-
-
-
-
-
-        
-
         const UInt64 allocationSize = 8ul * 1024ul * 1024ul;
         const UInt64 linkAllocationSize = 1ul * 1024ul * 1024ul;
 
@@ -57,15 +50,16 @@ internal static partial class Program
         metaData.UsedLinkInfoBufferLength = &usedLinkInfoBufferLength;
 
         Stopwatch stopwatch = Stopwatch.StartNew();
-        Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest", &metaData);
+        Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest2_links", &metaData);
         stopwatch.Stop();
 
-        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX-Directories");
-        Log.Debug(*metaData.UsedLinkInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n\n", Log.Level.Info, "DebugX-Links");
+        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX->Directories");
+        Log.Debug(*metaData.UsedLinkInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n\n", Log.Level.Info, "DebugX->Links");
 
-        Console.ReadLine();
+        //Console.ReadLine();
 
         MainWindow.TraversDirectoryBuffer(metaData.DirectoryInfoBuffer, *metaData.UsedDirectoryInfoBufferLength);
+        Console.WriteLine();
         MainWindow.TraversLinkBuffer(metaData.LinkInfoBuffer, *metaData.UsedLinkInfoBufferLength);
 
 

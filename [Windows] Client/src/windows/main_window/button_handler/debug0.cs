@@ -12,21 +12,46 @@ internal static partial class MainWindow
 
     internal unsafe static void TraversLinkBuffer(Byte* linkBuffer, UInt64 length)
     {
+        UInt64 offset = 0;
+        Char* path = stackalloc Char[32_768];
 
+    NEXT:
+        Link* link = (Link*)(linkBuffer + offset);
+
+        if (link->Type == NodeType.SymbolicLink)
+        {
+            String linkPath = new(link->Paths, 0, link->LinkNtPathLengthBytes >>> 1);
+            String targetPath = new(link->Paths, link->LinkNtPathLengthBytes >>> 1, link->TargetNtPathLengthBytes >>> 1);
+
+            Log.Debug(linkPath + " -> " + targetPath + "\n", Log.Level.Info, "SymLink");
+
+            offset += link->NextItemOffset;
+        }
+        else if (link->Type == NodeType.Junction)
+        {
+            String linkPath = new(link->Paths, 0, link->LinkNtPathLengthBytes >>> 1);
+            String targetPath = new(link->Paths, link->LinkNtPathLengthBytes >>> 1, link->TargetNtPathLengthBytes >>> 1);
+
+            Log.Debug(linkPath + " -> " + targetPath + "\n", Log.Level.Info, "Junction");
+
+            offset += link->NextItemOffset;
+        }
+
+        if (length > offset) goto NEXT;
     }
 
     internal unsafe static void TraversDirectoryBuffer(Byte* directoryBuffer, UInt64 length)
     {
         UInt64 offset = 0;
         Char* path = stackalloc Char[32_768];
-        Directory** workingTree = stackalloc Directory*[16_384];
+        Directory** directoryStack = stackalloc Directory*[16_384];
 
     NEXT:
         Node* node = (Node*)(directoryBuffer + offset);
 
         UInt16 pathLengthBytes;
 
-        pathLengthBytes = GetPath(path, node->ParentDirectoryBaseOffset, directoryBuffer, workingTree);
+        pathLengthBytes = GetPath(path, node->ParentDirectoryBaseOffset, directoryBuffer, directoryStack);
 
         if (node->Type == NodeType.File)
         {

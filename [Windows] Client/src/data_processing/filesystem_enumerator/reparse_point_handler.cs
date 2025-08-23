@@ -54,19 +54,19 @@ internal static partial class FilesystemEnumerator
 
         /****************************************************************************************/
 
-        Link* link = (Link*)metaData->LinkInfoBuffer + enumeratorContext->LinkInfoBufferOffset;
+        Link* link = (Link*)(metaData->LinkInfoBuffer + enumeratorContext->LinkInfoBufferOffset);
         link->Attributes = fileTagInformation.FileAttributes;
 
         if (isMountPoint)
         {
             UInt32 itemSize = (Link.RAW_SIZE + reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength + ntPathLengthBytes + 3u) & ~3u;
-            link->NextItemOffset = itemSize;
             link->Type = NodeType.Junction;
-            link->LinkNtPathLength = ntPathLengthBytes;
-            link->TargetNtPathLength = reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength;
+            link->NextItemOffset = itemSize;
+            link->LinkNtPathLengthBytes = ntPathLengthBytes;
+            link->TargetNtPathLengthBytes = reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength;
 
             Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
-            Buffer.MemoryCopy(reparseDataBuffer->MountPointReparseBuffer.PathBuffer, link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength, reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength);
+            Buffer.MemoryCopy(reparseDataBuffer->MountPointReparseBuffer.PathBuffer + (reparseDataBuffer->MountPointReparseBuffer.SubstituteNameOffset >>> 1), link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength, reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength);
 
             enumeratorContext->LinkInfoBufferOffset += itemSize;
         }
@@ -75,11 +75,11 @@ internal static partial class FilesystemEnumerator
             UInt32 itemSize = (Link.RAW_SIZE + reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength + ntPathLengthBytes + 3u) & ~3u;
             link->NextItemOffset = itemSize;
             link->Type = NodeType.SymbolicLink;
-            link->LinkNtPathLength = ntPathLengthBytes;
-            link->TargetNtPathLength = reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength;
+            link->LinkNtPathLengthBytes = ntPathLengthBytes;
+            link->TargetNtPathLengthBytes = reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength;
 
             Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
-            Buffer.MemoryCopy(reparseDataBuffer->SymbolicLinkReparseBuffer.PathBuffer, link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength, reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength);
+            Buffer.MemoryCopy(reparseDataBuffer->SymbolicLinkReparseBuffer.PathBuffer + (reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameOffset >>> 1), link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength, reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength);
 
             enumeratorContext->LinkInfoBufferOffset += itemSize;
         }
