@@ -3,8 +3,14 @@ using BSS.Interop;
 
 internal static partial class FilesystemEnumerator
 {
-    private unsafe static Boolean HandleReparsePoint(Char* ntPath, UInt16 ntPathLengthBytes, EnumeratorContext* enumeratorContext, MetaData* metaData)
+    private unsafe static Boolean HandleReparsePoint(Char* ntPath, UInt16 ntPathLengthBytes, InternalEnumeratorContext* internalEnumeratorContext, ExternalEnumeratorContext* externalEnumeratorContext)
     {
+        if (internalEnumeratorContext->LinkInfoBufferOffset + InternalEnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE > externalEnumeratorContext->LinkInfoBufferSize)
+        {
+            Log.Debug("LinkInfoBuffer to small, can not continue - Increase buffer size and try again: allocation size: " + externalEnumeratorContext->LinkInfoBufferSize + ", (could not fit another working buffer)\n", Log.Level.Error, "HandleReparsePoint");
+            return false;
+        }
+
         #region OPEN_LINK
         Handle fileHandle;
         NtStatus ntStatus;
@@ -41,7 +47,7 @@ internal static partial class FilesystemEnumerator
             return false;
         }
 
-        ntStatus = NtDll.NtFsControlFile(fileHandle, 0, null, null, &ioStatusBlock, Constants.FSCTL_GET_REPARSE_POINT, null, 0, enumeratorContext->NtFsControlFileWorkingBuffer, EnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE);
+        ntStatus = NtDll.NtFsControlFile(fileHandle, 0, null, null, &ioStatusBlock, Constants.FSCTL_GET_REPARSE_POINT, null, 0, internalEnumeratorContext->NtFsControlFileWorkingBuffer, InternalEnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE);
         if (ntStatus != Constants.STATUS_SUCCESS)
         {
             Log.Debug("FSCTL_GET_REPARSE_POINT failed with: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtFsControlFile");
@@ -50,11 +56,11 @@ internal static partial class FilesystemEnumerator
 
         Boolean isMountPoint = (fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_MOUNT_POINT) == Constants.IO_REPARSE_TAG_MOUNT_POINT;
         Boolean isSymLink = (fileTagInformation.ReparseTag & Constants.IO_REPARSE_TAG_SYMLINK) == Constants.IO_REPARSE_TAG_SYMLINK;
-        REPARSE_DATA_BUFFER* reparseDataBuffer = (REPARSE_DATA_BUFFER*)enumeratorContext->NtFsControlFileWorkingBuffer;
+        REPARSE_DATA_BUFFER* reparseDataBuffer = (REPARSE_DATA_BUFFER*)internalEnumeratorContext->NtFsControlFileWorkingBuffer;
 
         /****************************************************************************************/
 
-        Link* link = (Link*)(metaData->LinkInfoBuffer + enumeratorContext->LinkInfoBufferOffset);
+        Link* link = (Link*)(externalEnumeratorContext->LinkInfoBuffer + internalEnumeratorContext->LinkInfoBufferOffset);
         link->Attributes = fileTagInformation.FileAttributes;
 
         if (isMountPoint)
@@ -68,7 +74,7 @@ internal static partial class FilesystemEnumerator
             Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
             Buffer.MemoryCopy(reparseDataBuffer->MountPointReparseBuffer.PathBuffer + (reparseDataBuffer->MountPointReparseBuffer.SubstituteNameOffset >>> 1), link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength, reparseDataBuffer->MountPointReparseBuffer.SubstituteNameLength);
 
-            enumeratorContext->LinkInfoBufferOffset += itemSize;
+            internalEnumeratorContext->LinkInfoBufferOffset += itemSize;
         }
         else if (isSymLink)
         {
@@ -81,7 +87,7 @@ internal static partial class FilesystemEnumerator
             Buffer.MemoryCopy(ntPath, link->Paths, ntPathLengthBytes, ntPathLengthBytes);
             Buffer.MemoryCopy(reparseDataBuffer->SymbolicLinkReparseBuffer.PathBuffer + (reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameOffset >>> 1), link->Paths + (ntPathLengthBytes >>> 1), reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength, reparseDataBuffer->SymbolicLinkReparseBuffer.SubstituteNameLength);
 
-            enumeratorContext->LinkInfoBufferOffset += itemSize;
+            internalEnumeratorContext->LinkInfoBufferOffset += itemSize;
         }
         else
         {

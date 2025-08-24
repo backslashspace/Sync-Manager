@@ -4,10 +4,9 @@ using System.Runtime.CompilerServices;
 
 internal static partial class FilesystemEnumerator
 {
-    private unsafe static Boolean ProcessFile(Char* ntPath, UInt16 ntPathLengthBytes, EnumeratorContext* enumeratorContext, MetaData* metaData, UInt32* crc32c)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe static Boolean ProcessFile(Char* ntPath, UInt16 ntPathLengthBytes, InternalEnumeratorContext* internalEnumeratorContext, ExternalEnumeratorContext* externalEnumeratorContext, UInt64 parentNodeBaseOffset, FILE_DIRECTORY_INFORMATION* fileDirectoryInformation, UInt64* enumeratorResult_AddedSize)
     {
-        return true;
-
         #region OPEN_FILE
         Handle fileHandle;
         NtStatus ntStatus;
@@ -41,26 +40,113 @@ internal static partial class FilesystemEnumerator
         if (ntStatus != Constants.STATUS_SUCCESS)
         {
             Log.Debug("FileAttributeTagInformation failed with: 0x" + ntStatus.ToString("X") + "\n", Log.Level.Debug, "NtQueryInformationFile");
+            _ = NtDll.NtClose(fileHandle);
             return false;
         }
 
+        /****************************************************************************************/
+
+        UInt32 itemSize;
+        UInt64 currentNodeOffset = internalEnumeratorContext->DirectoryInfoBufferOffset + *enumeratorResult_AddedSize;
+        void* currentNode = externalEnumeratorContext->DirectoryInfoBuffer + internalEnumeratorContext->DirectoryInfoBufferOffset + *enumeratorResult_AddedSize;
+
+
+
+
+
+
+
+
         if (fileStatInformation.NumberOfLinks > 1)
         {
-            // check if already seen
+            Boolean alreadySeen = false;
+            UInt64 hardLinkMasterBaseOffset = currentNodeOffset;
+            if (!ProcessHardLink(internalEnumeratorContext, externalEnumeratorContext, enumeratorResult_AddedSize, fileStatInformation.FileId, &alreadySeen, &hardLinkMasterBaseOffset))
+            {
+                _ = NtDll.NtClose(fileHandle);
+                return false;
+            }
+
+            if (alreadySeen)
+            {
+                itemSize = (HardLinkSlave.RAW_SIZE + fileDirectoryInformation->FileNameLength + 7u) & ~7u;
+
+                HardLinkSlave* hardLinkSlave = (HardLinkSlave*)currentNode;
+                hardLinkSlave->NextItemOffset = itemSize;
+                hardLinkSlave->Type = NodeType.HardLinkSlave;
+                hardLinkSlave->ParentDirectoryBaseOffset = parentNodeBaseOffset;
+                hardLinkSlave->HardLinkMasterBaseOffset = hardLinkMasterBaseOffset;
+                hardLinkSlave->Attributes = fileDirectoryInformation->FileAttributes;
+                hardLinkSlave->NameLengthBytes = (UInt16)fileDirectoryInformation->FileNameLength;
+                Buffer.MemoryCopy(fileDirectoryInformation->FileName, hardLinkSlave->Name, fileDirectoryInformation->FileNameLength, fileDirectoryInformation->FileNameLength);
+
+                *enumeratorResult_AddedSize += itemSize;
+
+                _ = NtDll.NtClose(fileHandle);
+                return true;
+            }
         }
 
+        itemSize = (File.RAW_SIZE + fileDirectoryInformation->FileNameLength + 7u) & ~7u;
 
+        File* file = (File*)currentNode;
+        file->NextItemOffset = itemSize;
+        file->Type = NodeType.File;
+        file->Size = fileDirectoryInformation->EndOfFile;
+        file->ParentDirectoryBaseOffset = parentNodeBaseOffset;
+        file->Attributes = fileDirectoryInformation->FileAttributes;
+        file->NameLengthBytes = (UInt16)fileDirectoryInformation->FileNameLength;
+        Buffer.MemoryCopy(fileDirectoryInformation->FileName, file->Name, fileDirectoryInformation->FileNameLength, fileDirectoryInformation->FileNameLength);
 
+        *enumeratorResult_AddedSize += itemSize;
 
-
-
-
-
-
-
-
+        // digest file
 
         _ = NtDll.NtClose(fileHandle);
         return true;
     }
+
+
+
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe static Boolean ProcessHardLink(InternalEnumeratorContext* internalEnumeratorContext, ExternalEnumeratorContext* externalEnumeratorContext, UInt64* enumeratorResult_AddedSize, UInt64 fileId, Boolean* alreadySeen, UInt64* hardLinkMasterBaseOffset)
+    {
+        // scan
+        UInt64 index = 0;
+
+        if (internalEnumeratorContext->HardLinkBufferOffset == 0)
+        {
+            goto ADD_MASTER;
+        }
+
+    NEXT:
+        if (externalEnumeratorContext->HardLinkWorkingBuffer[index].FileId == fileId)
+        {
+            *alreadySeen = true;
+            *hardLinkMasterBaseOffset = externalEnumeratorContext->HardLinkWorkingBuffer[index].HardLinkMasterBaseOffset;
+            return true;
+        }
+
+        if (internalEnumeratorContext->HardLinkBufferOffset > index)
+        {
+            ++index;
+            goto NEXT;
+        }
+
+    ADD_MASTER:
+        if (internalEnumeratorContext->HardLinkBufferOffset == externalEnumeratorContext->HardLinkWorkingBufferSize)
+        {
+            Log.Debug("HardLinkWorkingBufferSize to small, can not continue - Increase buffer size and try again: allocation size: " + externalEnumeratorContext->HardLinkWorkingBufferSize + ", (could not fit another element)\n", Log.Level.Error, "ProcessHardLink");
+            return false;
+        }
+
+        externalEnumeratorContext->HardLinkWorkingBuffer[internalEnumeratorContext->HardLinkBufferOffset].FileId = fileId;
+        externalEnumeratorContext->HardLinkWorkingBuffer[internalEnumeratorContext->HardLinkBufferOffset].HardLinkMasterBaseOffset = *hardLinkMasterBaseOffset;
+        ++internalEnumeratorContext->HardLinkBufferOffset;
+
+        return true;
+    }
+
 }

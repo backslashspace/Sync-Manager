@@ -2,14 +2,34 @@
 using System.Runtime.InteropServices;
 
 [StructLayout(LayoutKind.Sequential)]
-internal unsafe ref struct MetaData
+internal unsafe ref struct ExternalEnumeratorContext
 {
+    internal HardLinkReference* HardLinkWorkingBuffer;
+    internal UInt64 HardLinkWorkingBufferSize;
+
     internal Byte* DirectoryInfoBuffer;
     internal UInt64 DirectoryInfoBufferSize;
+
     internal Byte* LinkInfoBuffer;
     internal UInt64 LinkInfoBufferSize;
+
     internal UInt64* UsedDirectoryInfoBufferLength;
     internal UInt64* UsedLinkInfoBufferLength;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe ref struct InternalEnumeratorContext
+{
+    internal const UInt32 NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE = 131_072u; // 32 pages
+    internal const UInt32 NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE = 69_632u; // 17 pages
+
+    internal Byte* NtQueryDirectoryFileWorkingBuffer;
+    internal Byte* NtFsControlFileWorkingBuffer;
+    internal Handle SynchronizationEventHandle;
+
+    internal UInt64 HardLinkBufferOffset;
+    internal UInt64 DirectoryInfoBufferOffset;
+    internal UInt64 LinkInfoBufferOffset;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -30,17 +50,10 @@ internal unsafe ref struct EnumeratorStackFrame
 }
 
 [StructLayout(LayoutKind.Sequential)]
-internal unsafe ref struct EnumeratorContext
+internal unsafe ref struct HardLinkReference
 {
-    internal const UInt32 NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE = 131_072u; // 32 pages
-    internal const UInt32 NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE = 69_632u; // 17 pages
-
-    internal Byte* NtQueryDirectoryFileWorkingBuffer;
-    internal Byte* NtFsControlFileWorkingBuffer;
-    internal Handle SynchronizationEventHandle;
-
-    internal UInt64 DirectoryInfoBufferOffset;
-    internal UInt64 LinkInfoBufferOffset;
+    internal UInt64 FileId;
+    internal UInt64 HardLinkMasterBaseOffset;
 }
 
 //
@@ -48,10 +61,10 @@ internal unsafe ref struct EnumeratorContext
 internal enum NodeType : UInt16
 {
     File = 0,
-    HardLink = 1,
-    Junction = 2,
-    Directory = 3,
-    SymbolicLink = 4,
+    Junction = 1,
+    Directory = 2,
+    SymbolicLink = 3,
+    HardLinkSlave = 4,
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -78,7 +91,7 @@ internal unsafe ref struct Node
 [StructLayout(LayoutKind.Sequential)]
 internal unsafe ref struct File
 {
-    internal const UInt32 RAW_SIZE = 34u; // used to pad (align) | all members but Name
+    internal const UInt32 RAW_SIZE = 32u; // used to pad (align) | all members but Name
 
     internal UInt64 ParentDirectoryBaseOffset;
     internal UInt32 NextItemOffset;
@@ -91,9 +104,23 @@ internal unsafe ref struct File
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal unsafe ref struct HardLinkSlave
+{
+    internal const UInt32 RAW_SIZE = 28u; // used to pad (align) | all members but Name
+
+    internal UInt64 ParentDirectoryBaseOffset;
+    internal UInt32 NextItemOffset;
+    internal NodeType Type;
+    internal UInt16 NameLengthBytes;
+    internal UInt64 HardLinkMasterBaseOffset;
+    internal UInt32 Attributes;
+    internal fixed Char Name[1];
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal unsafe ref struct Directory
 {
-    internal const UInt32 RAW_SIZE = 22u; // used to pad (align) | all members but Name
+    internal const UInt32 RAW_SIZE = 20u; // used to pad (align) | all members but Name
 
     internal UInt64 ParentDirectoryBaseOffset;
     internal UInt32 NextItemOffset;

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 internal static partial class FilesystemEnumerator
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private unsafe static Boolean EnumerateDirectory(Char* ntPath, UInt16 ntPathLengthBytes, UInt64 parentNodeBaseOffset, EnumeratorContext* enumeratorContext, MetaData* metaData, EnumeratorResult* enumeratorResult)
+    private unsafe static Boolean EnumerateDirectory(Char* ntPath, UInt16 ntPathLengthBytes, UInt64 parentNodeBaseOffset, InternalEnumeratorContext* internalEnumeratorContext, ExternalEnumeratorContext* externalEnumeratorContext, EnumeratorResult* enumeratorResult)
     {
         #region OPEN_DIRECTORY
         Handle fileHandle;
@@ -36,22 +36,22 @@ internal static partial class FilesystemEnumerator
         enumeratorResult->AddedSize = 0;
         enumeratorResult->NumberOfItems = 0;
         enumeratorResult->SawSubDirectory = false;
-        Byte* directoryInfoBuffer = metaData->DirectoryInfoBuffer + enumeratorContext->DirectoryInfoBufferOffset;
+        Byte* directoryInfoBuffer = externalEnumeratorContext->DirectoryInfoBuffer + internalEnumeratorContext->DirectoryInfoBufferOffset;
 
     /****************************************************************************************/
 
     QUERY:
-        if (enumeratorContext->DirectoryInfoBufferOffset + EnumeratorContext.NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE > metaData->DirectoryInfoBufferSize)
+        if (internalEnumeratorContext->DirectoryInfoBufferOffset + InternalEnumeratorContext.NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE > externalEnumeratorContext->DirectoryInfoBufferSize)
         {
-            Log.Debug("DirectoryInfoBufferSize to small, can not continue - Increase buffer size and try again: allocation size: " + metaData->DirectoryInfoBufferSize + ", (could not fit another working buffer)\n", Log.Level.Error, "EnumerateDirectory");
+            Log.Debug("DirectoryInfoBufferSize to small, can not continue - Increase buffer size and try again: allocation size: " + externalEnumeratorContext->DirectoryInfoBufferSize + ", (could not fit another working buffer)\n", Log.Level.Error, "EnumerateDirectory");
             _ = NtDll.NtClose(fileHandle);
             return false;
         }
 
-        ntStatus = NtDll.NtQueryDirectoryFile(fileHandle, enumeratorContext->SynchronizationEventHandle, null, null, &ioStatusBlock, enumeratorContext->NtQueryDirectoryFileWorkingBuffer, EnumeratorContext.NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE, Constants.FILE_INFORMATION_CLASS.FileDirectoryInformation, false, null, false);
+        ntStatus = NtDll.NtQueryDirectoryFile(fileHandle, internalEnumeratorContext->SynchronizationEventHandle, null, null, &ioStatusBlock, internalEnumeratorContext->NtQueryDirectoryFileWorkingBuffer, InternalEnumeratorContext.NT_QUERY_DIRECTORY_FILE_WORKING_BUFFER_SIZE, Constants.FILE_INFORMATION_CLASS.FileDirectoryInformation, false, null, false);
         if (ntStatus == Constants.STATUS_PENDING)
         {
-            ntStatus = NtDll.NtWaitForSingleObject(enumeratorContext->SynchronizationEventHandle, false, 0ul);
+            ntStatus = NtDll.NtWaitForSingleObject(internalEnumeratorContext->SynchronizationEventHandle, false, 0ul);
             if (ntStatus != Constants.STATUS_SUCCESS)
             {
                 Log.Debug("WaitForSingleObject failed: " + ntStatus.ToString("X") + "\n", Log.Level.Error, "NtQueryDirectoryFile");
@@ -80,35 +80,35 @@ internal static partial class FilesystemEnumerator
         UInt32 workingBufferPosition = 0u;
 
     PROCESS:
-        FILE_DIRECTORY_INFORMATION* systemInfo = (FILE_DIRECTORY_INFORMATION*)(enumeratorContext->NtQueryDirectoryFileWorkingBuffer + workingBufferPosition);
+        FILE_DIRECTORY_INFORMATION* fileDirectoryInformation = (FILE_DIRECTORY_INFORMATION*)(internalEnumeratorContext->NtQueryDirectoryFileWorkingBuffer + workingBufferPosition);
 
         // skip if "." and ".." | little-endian UTF-16
-        UInt64 skipCheck = (*(UInt64*)systemInfo->FileName) << 16;
+        UInt64 skipCheck = (*(UInt64*)fileDirectoryInformation->FileName) << 16;
         if (skipCheck == 3014656ul || skipCheck == 197571510272ul)
         {
-            workingBufferPosition += systemInfo->NextEntryOffset;
+            workingBufferPosition += fileDirectoryInformation->NextEntryOffset;
 
-            if (systemInfo->NextEntryOffset != 0u) goto PROCESS;
+            if (fileDirectoryInformation->NextEntryOffset != 0u) goto PROCESS;
             else goto QUERY;
         }
 
         //
 
-        Boolean isReparsePoint = (systemInfo->FileAttributes & Constants.FILE_ATTRIBUTE_REPARSE_POINT) == Constants.FILE_ATTRIBUTE_REPARSE_POINT;
-        Boolean isDirectory = (systemInfo->FileAttributes & Constants.FILE_ATTRIBUTE_DIRECTORY) == Constants.FILE_ATTRIBUTE_DIRECTORY;
+        Boolean isReparsePoint = (fileDirectoryInformation->FileAttributes & Constants.FILE_ATTRIBUTE_REPARSE_POINT) == Constants.FILE_ATTRIBUTE_REPARSE_POINT;
+        Boolean isDirectory = (fileDirectoryInformation->FileAttributes & Constants.FILE_ATTRIBUTE_DIRECTORY) == Constants.FILE_ATTRIBUTE_DIRECTORY;
 
         // directory
         if (isDirectory && !isReparsePoint)
         {
-            UInt32 itemSize = (Directory.RAW_SIZE + systemInfo->FileNameLength + 7u) & ~7u;
+            UInt32 itemSize = (Directory.RAW_SIZE + fileDirectoryInformation->FileNameLength + 7u) & ~7u;
 
             Directory* directory = (Directory*)(directoryInfoBuffer + enumeratorResult->AddedSize);
             directory->NextItemOffset = itemSize;
             directory->Type = NodeType.Directory;
             directory->ParentDirectoryBaseOffset = parentNodeBaseOffset;
-            directory->Attributes = systemInfo->FileAttributes;
-            directory->NameLengthBytes = (UInt16)systemInfo->FileNameLength;
-            Buffer.MemoryCopy(systemInfo->FileName, directory->Name, systemInfo->FileNameLength, systemInfo->FileNameLength);
+            directory->Attributes = fileDirectoryInformation->FileAttributes;
+            directory->NameLengthBytes = (UInt16)fileDirectoryInformation->FileNameLength;
+            Buffer.MemoryCopy(fileDirectoryInformation->FileName, directory->Name, fileDirectoryInformation->FileNameLength, fileDirectoryInformation->FileNameLength);
 
             enumeratorResult->AddedSize += itemSize;
             enumeratorResult->SawSubDirectory = true;
@@ -118,53 +118,37 @@ internal static partial class FilesystemEnumerator
 
         /****************************************************************************************/
 
-        UInt16 itemPathLengthBytes = (UInt16)(ntPathLengthBytes + systemInfo->FileNameLength + 2);
+        UInt16 itemPathLengthBytes = (UInt16)(ntPathLengthBytes + fileDirectoryInformation->FileNameLength + 2);
         Char* itemPath = stackalloc Char[itemPathLengthBytes >>> 1];
         Buffer.MemoryCopy(ntPath, itemPath, itemPathLengthBytes, ntPathLengthBytes);
         itemPath[ntPathLengthBytes >>> 1] = '\\';
-        Buffer.MemoryCopy(systemInfo->FileName, itemPath + (ntPathLengthBytes >>> 1) + 1, systemInfo->FileNameLength, systemInfo->FileNameLength);
+        Buffer.MemoryCopy(fileDirectoryInformation->FileName, itemPath + (ntPathLengthBytes >>> 1) + 1, fileDirectoryInformation->FileNameLength, fileDirectoryInformation->FileNameLength);
 
-        // file
         if (!isDirectory && !isReparsePoint)
         {
-            UInt32 itemSize = (File.RAW_SIZE + systemInfo->FileNameLength + 7u) & ~7u;
-
-            File* file = (File*)(directoryInfoBuffer + enumeratorResult->AddedSize);
-            file->NextItemOffset = itemSize;
-            file->Type = NodeType.File;
-            file->Size = systemInfo->EndOfFile;
-            file->ParentDirectoryBaseOffset = parentNodeBaseOffset;
-            file->Attributes = systemInfo->FileAttributes;
-            file->NameLengthBytes = (UInt16)systemInfo->FileNameLength;
-            Buffer.MemoryCopy(systemInfo->FileName, file->Name, systemInfo->FileNameLength, systemInfo->FileNameLength);
-
-            enumeratorResult->AddedSize += itemSize;
-
-            if (ProcessFile(itemPath, itemPathLengthBytes, enumeratorContext, metaData, &file->CRC32C))
+            if (!ProcessFile(itemPath, itemPathLengthBytes, internalEnumeratorContext, externalEnumeratorContext, parentNodeBaseOffset, fileDirectoryInformation, &enumeratorResult->AddedSize))
             {
-
+                _ = NtDll.NtClose(fileHandle);
+                return false;
             }
         }
         else // handle link (junction / symbolic link)
         {
-            if (enumeratorContext->LinkInfoBufferOffset + EnumeratorContext.NT_FS_CONTROL_FILE_WORKING_BUFFER_SIZE > metaData->LinkInfoBufferSize)
+            if (!HandleReparsePoint(itemPath, itemPathLengthBytes, internalEnumeratorContext, externalEnumeratorContext))
             {
-                Log.Debug("LinkInfoBuffer to small, can not continue - Increase buffer size and try again: allocation size: " + metaData->LinkInfoBufferSize + ", (could not fit another working buffer)\n", Log.Level.Error, "HandleReparsePoint");
                 _ = NtDll.NtClose(fileHandle);
                 return false;
             }
 
-            HandleReparsePoint(itemPath, itemPathLengthBytes, enumeratorContext, metaData);
-
-            workingBufferPosition += systemInfo->NextEntryOffset;
-            if (systemInfo->NextEntryOffset != 0u) goto PROCESS;
+            workingBufferPosition += fileDirectoryInformation->NextEntryOffset;
+            if (fileDirectoryInformation->NextEntryOffset != 0u) goto PROCESS;
             else goto QUERY;
         }
 
     PROCESS_TAIL:
         ++enumeratorResult->NumberOfItems;
-        workingBufferPosition += systemInfo->NextEntryOffset;
-        if (systemInfo->NextEntryOffset != 0u) goto PROCESS;
+        workingBufferPosition += fileDirectoryInformation->NextEntryOffset;
+        if (fileDirectoryInformation->NextEntryOffset != 0u) goto PROCESS;
         else goto QUERY;
     }
 }

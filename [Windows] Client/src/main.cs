@@ -37,30 +37,33 @@ internal static partial class Program
 
         const UInt64 allocationSize = 8ul * 1024ul * 1024ul;
         const UInt64 linkAllocationSize = 1ul * 1024ul * 1024ul;
+        const UInt64 hardLinkWorkingBufferSize = 1ul * 1024ul * 1024ul;
 
         UInt64 usedLinkInfoBufferLength = 0;
         UInt64 usedDirectoryInfoBufferLength = 0;
 
-        MetaData metaData;
-        metaData.DirectoryInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)allocationSize);
-        metaData.DirectoryInfoBufferSize = allocationSize;
-        metaData.UsedDirectoryInfoBufferLength = &usedDirectoryInfoBufferLength;
-        metaData.LinkInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)linkAllocationSize);
-        metaData.LinkInfoBufferSize = linkAllocationSize;
-        metaData.UsedLinkInfoBufferLength = &usedLinkInfoBufferLength;
+        ExternalEnumeratorContext externalEnumeratorContext;
+        externalEnumeratorContext.HardLinkWorkingBuffer = (HardLinkReference*)NativeMemory.Alloc((UIntPtr)hardLinkWorkingBufferSize);
+        externalEnumeratorContext.HardLinkWorkingBufferSize = hardLinkWorkingBufferSize >>> 4; // is 1/16 -> byte to 16 byte struct 
+        externalEnumeratorContext.DirectoryInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)allocationSize);
+        externalEnumeratorContext.DirectoryInfoBufferSize = allocationSize;
+        externalEnumeratorContext.UsedDirectoryInfoBufferLength = &usedDirectoryInfoBufferLength;
+        externalEnumeratorContext.LinkInfoBuffer = (Byte*)NativeMemory.Alloc((UIntPtr)linkAllocationSize);
+        externalEnumeratorContext.LinkInfoBufferSize = linkAllocationSize;
+        externalEnumeratorContext.UsedLinkInfoBufferLength = &usedLinkInfoBufferLength;
 
         Stopwatch stopwatch = Stopwatch.StartNew();
-        Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest2_links", &metaData);
+        Boolean success = RetrieveMetadata("\\??\\C:\\Users\\dev0\\Desktop\\walktest2_links", &externalEnumeratorContext);
         stopwatch.Stop();
 
-        Log.Debug(*metaData.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX->Directories");
-        Log.Debug(*metaData.UsedLinkInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n\n", Log.Level.Info, "DebugX->Links");
+        Log.Debug(*externalEnumeratorContext.UsedDirectoryInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n", Log.Level.Info, "DebugX->Directories");
+        Log.Debug(*externalEnumeratorContext.UsedLinkInfoBufferLength + " bytes in " + stopwatch.Elapsed.TotalMilliseconds + "ms\n\n", Log.Level.Info, "DebugX->Links");
 
         //Console.ReadLine();
 
-        MainWindow.TraversDirectoryBuffer(metaData.DirectoryInfoBuffer, *metaData.UsedDirectoryInfoBufferLength);
+        MainWindow.TraversDirectoryBuffer(externalEnumeratorContext.DirectoryInfoBuffer, *externalEnumeratorContext.UsedDirectoryInfoBufferLength);
         Console.WriteLine();
-        MainWindow.TraversLinkBuffer(metaData.LinkInfoBuffer, *metaData.UsedLinkInfoBufferLength);
+        MainWindow.TraversLinkBuffer(externalEnumeratorContext.LinkInfoBuffer, *externalEnumeratorContext.UsedLinkInfoBufferLength);
 
 
 
@@ -76,8 +79,8 @@ internal static partial class Program
 
         Console.ReadLine();
 
-        NativeMemory.Free(metaData.DirectoryInfoBuffer);
-        NativeMemory.Free(metaData.LinkInfoBuffer);
+        NativeMemory.Free(externalEnumeratorContext.DirectoryInfoBuffer);
+        NativeMemory.Free(externalEnumeratorContext.LinkInfoBuffer);
 
         return 0;
     }
